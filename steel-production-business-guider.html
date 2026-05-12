@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel Production Business Guider - Premium Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(270deg, #667eea, #764ba2, #f093fb, #667eea);
+            background-size: 800% 800%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px 0 rgba(31, 38, 135, 0.5);
+        }
+        
+        .premium-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .premium-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .premium-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .premium-button:hover::before {
+            left: 100%;
+        }
+        
+        .tab-button {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .chat-bubble {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .chat-bubble.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+        }
+        
+        .steel-gradient {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 50%, #1a202c 100%);
+        }
+        
+        .steel-accent {
+            background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card p-8 w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <div class="mb-4">
+                    <i class="fas fa-industry text-6xl text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Steel Production Business Guider</h1>
+                <p class="text-gray-200">Premium Steel Industry Intelligence Platform</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <input type="text" id="username" placeholder="Enter your name" 
+                           class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                </div>
+                <div>
+                    <input type="email" id="email" placeholder="Enter your email" 
+                           class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                </div>
+                <div>
+                    <input type="text" id="company" placeholder="Company Name" 
+                           class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                </div>
+                <button type="submit" class="premium-button w-full">
+                    <span class="flex items-center justify-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Access Steel Guider
+                    </span>
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-gray-200 text-sm">Advanced Analytics for Steel Industry</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Application -->
+    <div id="mainApp" class="hidden">
+        <!-- Header -->
+        <header class="glass-card m-4 p-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <div class="text-white">
+                        <h1 class="text-2xl font-bold flex items-center">
+                            <i class="fas fa-industry mr-3"></i>
+                            Steel Production Business Guider
+                        </h1>
+                        <p class="text-sm opacity-90">Welcome, <span id="userName">User</span> | <span id="userCompany">Company</span></p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="premium-button">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Logout
+                </button>
+            </div>
+        </header>
+        
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap justify-center gap-2 m-4">
+            <button class="tab-button active" onclick="showTab('dashboard')">
+                <i class="fas fa-chart-line mr-2"></i>Dashboard
+            </button>
+            <button class="tab-button" onclick="showTab('production')">
+                <i class="fas fa-cogs mr-2"></i>Production
+            </button>
+            <button class="tab-button" onclick="showTab('market')">
+                <i class="fas fa-chart-bar mr-2"></i>Market Analysis
+            </button>
+            <button class="tab-button" onclick="showTab('quality')">
+                <i class="fas fa-award mr-2"></i>Quality Control
+            </button>
+            <button class="tab-button" onclick="showTab('logistics')">
+                <i class="fas fa-truck mr-2"></i>Logistics
+            </button>
+            <button class="tab-button" onclick="showTab('finance')">
+                <i class="fas fa-dollar-sign mr-2"></i>Finance
+            </button>
+            <button class="tab-button" onclick="showTab('ai-assistant')">
+                <i class="fas fa-robot mr-2"></i>AI Assistant
+            </button>
+        </div>
+        
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="metric-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-200 text-sm">Daily Production</p>
+                            <p class="text-2xl font-bold text-white">1,250 tons</p>
+                            <p class="text-green-300 text-sm"><i class="fas fa-arrow-up"></i> +12.5%</p>
+                        </div>
+                        <div class="text-3xl text-blue-300">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-200 text-sm">Quality Rate</p>
+                            <p class="text-2xl font-bold text-white">98.5%</p>
+                            <p class="text-green-300 text-sm"><i class="fas fa-arrow-up"></i> +2.1%</p>
+                        </div>
+                        <div class="text-3xl text-green-300">
+                            <i class="fas fa-award"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-200 text-sm">Revenue Today</p>
+                            <p class="text-2xl font-bold text-white">$875K</p>
+                            <p class="text-green-300 text-sm"><i class="fas fa-arrow-up"></i> +8.3%</p>
+                        </div>
+                        <div class="text-3xl text-yellow-300">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-200 text-sm">Active Orders</p>
+                            <p class="text-2xl font-bold text-white">142</p>
+                            <p class="text-yellow-300 text-sm"><i class="fas fa-minus"></i> Stable</p>
+                        </div>
+                        <div class="text-3xl text-purple-300">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">
+                        <i class="fas fa-chart-line mr-2"></i>Production Trend
+                    </h3>
+                    <canvas id="productionChart"></canvas>
+                </div>
+                
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">
+                        <i class="fas fa-chart-pie mr-2"></i>Steel Types Distribution
+                    </h3>
+                    <canvas id="steelTypesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Production Tab -->
+        <div id="production" class="tab-content hidden p-4">
+            <div class="glass-card p-6 mb-6">
+                <h3 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-cogs mr-3"></i>Production Control Center
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="metric-card">
+                        <h4 class="text-lg font-semibold text-white mb-3">Furnace Status</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-white">
+                                <span>Furnace 1</span>
+                                <span class="text-green-300">Active</span>
+                            </div>
+                            <div class="flex justify-between text-white">
+                                <span>Temperature</span>
+                                <span>1,650°C</span>
+                            </div>
+                            <div class="flex justify-between text-white">
+                                <span>Efficiency</span>
+                                <span>94%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4 class="text-lg font-semibold text-white mb-3">Current Batch</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-white">
+                                <span>Steel Type</span>
+                                <span>Carbon Steel</span>
+                            </div>
+                            <div class="flex justify-between text-white">
+                                <span>Progress</span>
+                                <span>75%</span>
+                            </div>
+                            <div class="flex justify-between text-white">
+                                <span>ETA</span>
+                                <span>2.5 hrs</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4 class="text-lg font-semibold text-white mb-3">Resource Usage</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-white">
+                                <span>Iron Ore</span>
+                                <span>450 tons</span>
+                            </div>
+                            <div class="flex justify-between text-white">
+                                <span>Coke</span>
+                                <span>180 tons</span>
+                            </div>
+                            <div class="flex justify-between text-white">
+                                <span>Energy</span>
+                                <span>2.4 MWh</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button class="premium-button" onclick="startProduction()">
+                        <i class="fas fa-play mr-2"></i>Start New Batch
+                    </button>
+                    <button class="premium-button" onclick="optimizeProduction()">
+                        <i class="fas fa-chart-line mr-2"></i>Optimize Process
+                    </button>
+                    <button class="premium-button" onclick="maintenanceSchedule()">
+                        <i class="fas fa-wrench mr-2"></i>Maintenance
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Market Analysis Tab -->
+        <div id="market" class="tab-content hidden p-4">
+            <div class="glass-card p-6 mb-6">
+                <h3 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-chart-bar mr-3"></i>Steel Market Intelligence
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-white mb-4">Current Market Prices</h4>
+                        <div class="space-y-3">
+                            <div class="metric-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white">Hot Rolled Coil</span>
+                                    <span class="text-xl font-bold text-white">$650/ton</span>
+                                </div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white">Cold Rolled Coil</span>
+                                    <span class="text-xl font-bold text-white">$750/ton</span>
+                                </div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white">Rebar</span>
+                                    <span class="text-xl font-bold text-white">$580/ton</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-white mb-4">Demand Forecast</h4>
+                        <canvas id="demandChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quality Control Tab -->
+        <div id="quality" class="tab-content hidden p-4">
+            <div class="glass-card p-6 mb-6">
+                <h3 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-award mr-3"></i>Quality Control Center
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="metric-card">
+                        <h4 class="text-lg font-semibold text-white mb-3">Today's Tests</h4>
+                        <div class="text-3xl font-bold text-white mb-2">48</div>
+                        <div class="text-green-300">All Passed</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4 class="text-lg font-semibold text-white mb-3">Quality Score</h4>
+                        <div class="text-3xl font-bold text-white mb-2">98.5%</div>
+                        <div class="text-green-300">+2.1% vs Yesterday</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4 class="text-lg font-semibold text-white mb-3">Defect Rate</h4>
+                        <div class="text-3xl font-bold text-white mb-2">0.8%</div>
+                        <div class="text-yellow-300">Below Target</div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button class="premium-button" onclick="runQualityTest()">
+                        <i class="fas fa-vial mr-2"></i>Run Quality Test
+                    </button>
+                    <button class="premium-button" onclick="viewQualityReport()">
+                        <i class="fas fa-file-alt mr-2"></i>View Reports
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Logistics Tab -->
+        <div id="logistics" class="tab-content hidden p-4">
+            <div class="glass-card p-6 mb-6">
+                <h3 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-truck mr-3"></i>Logistics & Supply Chain
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-white mb-4">Active Shipments</h4>
+                        <div class="space-y-3">
+                            <div class="metric-card">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-white font-semibold">Order #ST-2024-001</div>
+                                        <div class="text-gray-300 text-sm">To: Mumbai Port</div>
+                                    </div>
+                                    <div class="text-green-300">In Transit</div>
+                                </div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-white font-semibold">Order #ST-2024-002</div>
+                                        <div class="text-gray-300 text-sm">To: Delhi Warehouse</div>
+                                    </div>
+                                    <div class="text-blue-300">Loading</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-white mb-4">Supply Chain Map</h4>
+                        <div id="logisticsMap" style="height: 300px; border-radius: 10px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Finance Tab -->
+        <div id="finance" class="tab-content hidden p-4">
+            <div class="glass-card p-6 mb-6">
+                <h3 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-dollar-sign mr-3"></i>Financial Overview
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="metric-card">
+                        <h4 class="text-sm text-gray-200">Monthly Revenue</h4>
+                        <div class="text-2xl font-bold text-white">$24.5M</div>
+                        <div class="text-green-300 text-sm">+15.2%</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4 class="text-sm text-gray-200">Operating Costs</h4>
+                        <div class="text-2xl font-bold text-white">$18.2M</div>
+                        <div class="text-red-300 text-sm">+8.5%</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4 class="text-sm text-gray-200">Net Profit</h4>
+                        <div class="text-2xl font-bold text-white">$6.3M</div>
+                        <div class="text-green-300 text-sm">+32.1%</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4 class="text-sm text-gray-200">Profit Margin</h4>
+                        <div class="text-2xl font-bold text-white">25.7%</div>
+                        <div class="text-green-300 text-sm">+3.2%</div>
+                    </div>
+                </div>
+                
+                <canvas id="financeChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- AI Assistant Tab -->
+        <div id="ai-assistant" class="tab-content hidden p-4">
+            <div class="glass-card p-6">
+                <h3 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-robot mr-3"></i>Steel Production AI Assistant
+                </h3>
+                
+                <div id="chatContainer" class="bg-white/10 rounded-lg p-4 h-96 overflow-y-auto mb-4">
+                    <div class="chat-bubble">
+                        <strong>AI Assistant:</strong> Hello! I'm your Steel Production AI Assistant. I can help you with:
+                        <ul class="mt-2 ml-4">
+                            <li>Production optimization</li>
+                            <li>Quality control recommendations</li>
+                            <li>Market analysis insights</li>
+                            <li>Supply chain management</li>
+                            <li>Financial planning</li>
+                        </ul>
+                        How can I assist you today?
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <input type="text" id="chatInput" placeholder="Ask me anything about steel production..." 
+                           class="flex-1 px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                    <button class="premium-button" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let currentUser = null;
+        let charts = {};
+        
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            initializeCharts();
+        });
+        
+        // Check if user is logged in
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('steelGuiderUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainApp();
+            } else {
+                showLoginScreen();
+            }
+        }
+        
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const company = document.getElementById('company').value;
+            
+            if (username && email && company) {
+                currentUser = { username, email, company };
+                localStorage.setItem('steelGuiderUser', JSON.stringify(currentUser));
+                showMainApp();
+            }
+        });
+        
+        // Show main application
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.username;
+            document.getElementById('userCompany').textContent = currentUser.company;
+        }
+        
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+        
+        // Logout function
+        function logout() {
+            localStorage.removeItem('steelGuiderUser');
+            currentUser = null;
+            showLoginScreen();
+        }
+        
+        // Tab navigation
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Add active class to clicked button
+            event.target.closest('.tab-button').classList.add('active');
+            
+            // Initialize specific tab content
+            if (tabName === 'logistics') {
+                initializeLogisticsMap();
+            }
+        }
+        
+        // Initialize charts
+        function initializeCharts() {
+            // Production Trend Chart
+            const productionCtx = document.getElementById('productionChart');
+            if (productionCtx) {
+                charts.production = new Chart(productionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Production (tons)',
+                            data: [1200, 1350, 1100, 1450, 1300, 1250, 1400],
+                            borderColor: 'rgb(147, 51, 234)',
+                            backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: 'white' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            x: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Steel Types Chart
+            const steelTypesCtx = document.getElementById('steelTypesChart');
+            if (steelTypesCtx) {
+                charts.steelTypes = new Chart(steelTypesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Carbon Steel', 'Alloy Steel', 'Stainless Steel', 'Tool Steel'],
+                        datasets: [{
+                            data: [45, 25, 20, 10],
+                            backgroundColor: [
+                                'rgba(147, 51, 234, 0.8)',
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(251, 146, 60, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: 'white' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Demand Forecast Chart
+            const demandCtx = document.getElementById('demandChart');
+            if (demandCtx) {
+                charts.demand = new Chart(demandCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Demand (tons)',
+                            data: [3200, 3500, 3800, 3600, 4000, 4200],
+                            backgroundColor: 'rgba(147, 51, 234, 0.8)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: 'white' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            x: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Finance Chart
+            const financeCtx = document.getElementById('financeChart');
+            if (financeCtx) {
+                charts.finance = new Chart(financeCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Revenue',
+                            data: [20, 22, 21, 23, 24, 24.5],
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Costs',
+                            data: [15, 16, 15.5, 17, 18, 18.2],
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: 'white' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            x: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Initialize logistics map
+        function initializeLogisticsMap() {
+            const mapContainer = document.getElementById('logisticsMap');
+            if (mapContainer && !window.logisticsMap) {
+                window.logisticsMap = L.map('logisticsMap').setView([20.5937, 78.9629], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window.logisticsMap);
+                
+                // Add markers for key locations
+                const locations = [
+                    { lat: 19.0760, lng: 72.8777, name: "Mumbai Port" },
+                    { lat: 28.6139, lng: 77.2090, name: "Delhi Warehouse" },
+                    { lat: 22.5726, lng: 88.3639, name: "Kolkata Factory" }
+                ];
+                
+                locations.forEach(loc => {
+                    L.marker([loc.lat, loc.lng]).addTo(window.logisticsMap)
+                        .bindPopup(loc.name);
+                });
+            }
+        }
+        
+        // Production functions
+        function startProduction() {
+            showNotification('New production batch started successfully!', 'success');
+        }
+        
+        function optimizeProduction() {
+            showNotification('Production optimization analysis complete. Efficiency can be improved by 8%.', 'info');
+        }
+        
+        function maintenanceSchedule() {
+            showNotification('Maintenance scheduled for next week. All systems operational.', 'info');
+        }
+        
+        // Quality control functions
+        function runQualityTest() {
+            showNotification('Quality test initiated. Results will be available in 2 hours.', 'info');
+        }
+        
+        function viewQualityReport() {
+            showNotification('Quality reports downloaded successfully.', 'success');
+        }
+        
+        // Chat functions
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                const chatContainer = document.getElementById('chatContainer');
+                
+                // Add user message
+                const userBubble = document.createElement('div');
+                userBubble.className = 'chat-bubble user';
+                userBubble.innerHTML = `<strong>You:</strong> ${message}`;
+                chatContainer.appendChild(userBubble);
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    const aiBubble = document.createElement('div');
+                    aiBubble.className = 'chat-bubble';
+                    aiBubble.innerHTML = `<strong>AI Assistant:</strong> ${getAIResponse(message)}`;
+                    chatContainer.appendChild(aiBubble);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 1000);
+                
+                input.value = '';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+        
+        function getAIResponse(message) {
+            const responses = {
+                'production': 'Based on current data, your production efficiency is at 94%. I recommend optimizing furnace temperature to increase output by 5%.',
+                'quality': 'Your current quality rate of 98.5% is excellent. Consider implementing predictive maintenance to maintain this standard.',
+                'market': 'Steel prices are trending upward. Current market conditions favor expanding production capacity.',
+                'logistics': 'Your supply chain is performing well. Consider diversifying suppliers to reduce dependency risks.',
+                'finance': 'Your profit margin of 25.7% is above industry average. Focus on cost reduction to improve further.'
+            };
+            
+            for (let key in responses) {
+                if (message.toLowerCase().includes(key)) {
+                    return responses[key];
+                }
+            }
+            
+            return 'I understand your question about "' + message + '". Let me analyze the data and provide you with specific recommendations for your steel production operations.';
+        }
+        
+        // Notification function
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 fade-in ${
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
+                    ${message}
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Handle Enter key in chat
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

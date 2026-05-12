@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Business Growth Advisor - Final Premium Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8d 50%, #4a7c7e 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(30, 58, 138, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(74, 124, 126, 0.3) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+            z-index: -1;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.37),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .premium-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .premium-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 0 0 2px rgba(255, 255, 255, 0.2),
+                inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+        
+        .premium-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+        
+        .premium-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 3px rgba(102, 126, 234, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            outline: none;
+            transform: scale(1.02);
+        }
+        
+        .premium-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .premium-button {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8d 50%, #4a7c7e 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .premium-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .premium-button:hover::before {
+            left: 100%;
+        }
+        
+        .premium-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 10px 30px rgba(30, 58, 138, 0.4),
+                0 0 0 2px rgba(255, 255, 255, 0.2),
+                inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { 
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab-button.active { 
+            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8d 50%, #4a7c7e 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 
+                0 4px 15px rgba(30, 58, 138, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #10b981);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .map-container { 
+            height: 400px; 
+            width: 100%; 
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chat-container { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            width: 350px; 
+            height: 450px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3);
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            display: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-messages { 
+            height: 350px; 
+            overflow-y: auto; 
+            padding: 15px; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chat-input { 
+            padding: 15px; 
+            border: none; 
+            width: 100%; 
+            outline: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .glow-effect {
+            box-shadow: 
+                0 0 20px rgba(102, 126, 234, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+            <div class="max-w-md w-full p-8">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-white bg-opacity-10 rounded-full mb-6">
+                        <i class="fas fa-brain text-3xl text-purple-600"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold text-white mb-2">AI Business Advisor</h1>
+                    <p class="text-purple-100 text-lg">Intelligent Business Growth Platform</p>
+                    <div class="flex justify-center space-x-2 mt-4">
+                        <span class="px-3 py-1 bg-purple-600 text-white text-xs rounded-full">AI Powered</span>
+                        <span class="px-3 py-1 bg-blue-600 text-white text-xs rounded-full">Global Reach</span>
+                        <span class="px-3 py-1 bg-green-600 text-white text-xs rounded-full">Premium</span>
+                    </div>
+                </div>
+                
+                <div class="premium-card p-8">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Email Address</label>
+                            <div class="relative">
+                                <input type="email" id="loginEmail" placeholder="Enter your business email" 
+                                       class="premium-input w-full">
+                                <i class="fas fa-envelope absolute right-4 top-4 text-purple-300"></i>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Password</label>
+                            <div class="relative">
+                                <input type="password" id="loginPassword" placeholder="Enter your password" 
+                                       class="premium-input w-full">
+                                <i class="fas fa-lock absolute right-4 top-4 text-purple-300"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center text-sm text-white">
+                                <input type="checkbox" class="mr-2 rounded">
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" class="text-purple-300 hover:text-purple-200 text-sm">Forgot password?</a>
+                        </div>
+                        
+                        <button onclick="login()" id="loginBtn" 
+                                class="premium-button w-full glow-effect">
+                            <span id="loginBtnText">Access Dashboard</span>
+                        </button>
+                        
+                        <div class="text-center mt-6">
+                            <p class="text-purple-200 text-sm">New to our platform?</p>
+                            <button onclick="showRegister()" class="text-purple-300 hover:text-purple-200 font-medium">
+                                Create Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (hidden initially) -->
+        <div id="mainApp" class="hidden min-h-screen">
+            <!-- Navigation -->
+            <nav class="glass-morphism sticky top-0 z-50 px-6 py-4">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-8">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-brain text-white"></i>
+                                </div>
+                                <span class="ml-3 text-xl font-bold text-white">AI Business Advisor</span>
+                                <span class="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full pulse-animation">LIVE</span>
+                            </div>
+                            
+                            <div class="hidden md:flex space-x-2">
+                                <button onclick="showTab('dashboard')" class="tab-button active px-4 py-2 rounded-lg text-sm font-medium">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                </button>
+                                <button onclick="showTab('risk')" class="tab-button px-4 py-2 rounded-lg text-sm font-medium">
+                                    <i class="fas fa-shield-alt mr-2"></i>Risk Analysis
+                                </button>
+                                <button onclick="showTab('business')" class="tab-button px-4 py-2 rounded-lg text-sm font-medium">
+                                    <i class="fas fa-lightbulb mr-2"></i>Business Ideas
+                                </button>
+                                <button onclick="showTab('international')" class="tab-button px-4 py-2 rounded-lg text-sm font-medium">
+                                    <i class="fas fa-globe mr-2"></i>International Markets
+                                </button>
+                                <button onclick="showTab('dealers')" class="tab-button px-4 py-2 rounded-lg text-sm font-medium">
+                                    <i class="fas fa-handshake mr-2"></i>Dealer Finder
+                                </button>
+                                <button onclick="showTab('export')" class="tab-button px-4 py-2 rounded-lg text-sm font-medium">
+                                    <i class="fas fa-route mr-2"></i>Export Routes
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <p class="text-purple-200 text-sm mb-1">Welcome back,</p>
+                                <p id="userName" class="text-white font-semibold">User!</p>
+                            </div>
+                            <button onclick="toggleChat()" class="premium-button glow-effect">
+                                <i class="fas fa-robot mr-2"></i>AI Assistant
+                            </button>
+                            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active p-8">
+                <div class="max-w-7xl mx-auto">
+                    <div class="text-center mb-8 slide-in">
+                        <h1 class="text-4xl font-bold text-white mb-2">Business Intelligence Dashboard</h1>
+                        <p class="text-purple-100 text-lg">Real-time insights for strategic growth</p>
+                    </div>
+                    
+                    <!-- Premium Metrics Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="metric-card slide-in" style="animation-delay: 0.1s;">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-chart-line text-white"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-purple-200 text-sm font-medium">Total Revenue</p>
+                                        <p class="text-3xl font-bold text-white">$987,453</p>
+                                        <p class="text-green-400 text-sm mt-1">
+                                            <i class="fas fa-arrow-up mr-1"></i>+18.7% this quarter
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card slide-in" style="animation-delay: 0.2s;">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-users text-white"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-purple-200 text-sm font-medium">Active Projects</p>
+                                        <p class="text-3xl font-bold text-white">156</p>
+                                        <p class="text-blue-400 text-sm mt-1">
+                                            <i class="fas fa-plus-circle mr-1"></i>+24 new this month
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card slide-in" style="animation-delay: 0.3s;">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-trending-up text-white"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-purple-200 text-sm font-medium">Growth Rate</p>
+                                        <p class="text-3xl font-bold text-white">42.3%</p>
+                                        <p class="text-yellow-400 text-sm mt-1">
+                                            <i class="fas fa-rocket mr-1"></i>Above industry average
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card slide-in" style="animation-delay: 0.4s;">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-award text-white"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-purple-200 text-sm font-medium">Success Rate</p>
+                                        <p class="text-3xl font-bold text-white">94.8%</p>
+                                        <p class="text-purple-300 text-sm mt-1">
+                                            <i class="fas fa-star mr-1"></i>Exceptional performance
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="premium-card p-6 fade-in">
+                            <h2 class="text-xl font-bold text-white mb-4">Revenue Analytics</h2>
+                            <div style="height: 300px;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="premium-card p-6 fade-in">
+                            <h2 class="text-xl font-bold text-white mb-4">Growth Forecast</h2>
+                            <div style="height: 300px;">
+                                <canvas id="growthChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Risk Map -->
+                    <div class="premium-card p-6 mb-8 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Global Risk Assessment</h2>
+                        <div id="riskMap" class="map-container"></div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="premium-card p-6 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Business Activity Feed</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3 pulse-animation"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Major partnership secured</p>
+                                    <p class="text-xs text-gray-500">3-year contract with Global Tech Corp</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Market expansion completed</p>
+                                    <p class="text-xs text-gray-500">Successfully entered Asian markets</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-4 bg-white bg-opacity-10 rounded-lg">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Risk assessment updated</p>
+                                    <p class="text-xs text-gray-500">Comprehensive analysis for 5 new locations</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Analysis Tab -->
+            <div id="risk" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-8 slide-in">
+                        <h1 class="text-4xl font-bold text-white mb-2">Advanced Risk Analysis Center</h1>
+                        <p class="text-purple-100 text-lg">Comprehensive risk assessment for informed decisions</p>
+                    </div>
+                    
+                    <div class="premium-card p-6 mb-6 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Location Risk Assessment</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Business Location</label>
+                                <div class="relative">
+                                    <input type="text" id="riskLocation" placeholder="Enter city, state, or country" 
+                                           class="premium-input w-full">
+                                    <i class="fas fa-map-marker-alt absolute right-4 top-4 text-purple-300"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Analysis Type</label>
+                                <select id="riskType" class="premium-input w-full">
+                                    <option value="flood">Flood Risk</option>
+                                    <option value="earthquake">Earthquake Risk</option>
+                                    <option value="both">Combined Analysis</option>
+                                    <option value="comprehensive">Comprehensive Assessment</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="analyzeRisk()" class="premium-button glow-effect mt-4">
+                            <i class="fas fa-search mr-2"></i>Advanced Risk Analysis
+                        </button>
+                    </div>
+
+                    <div id="riskResults" class="hidden premium-card p-6 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Risk Assessment Results</h2>
+                        <div id="riskContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Ideas Tab -->
+            <div id="business" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-8 slide-in">
+                        <h1 class="text-4xl font-bold text-white mb-2">Innovation Hub</h1>
+                        <p class="text-purple-100 text-lg">AI-powered business recommendations tailored to your goals</p>
+                    </div>
+                    
+                    <div class="premium-card p-6 mb-6 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Discover Business Opportunities</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Investment Range</label>
+                                <select id="budget" class="premium-input w-full">
+                                    <option value="low">Starter ($0 - $50K)</option>
+                                    <option value="medium">Growth ($50K - $200K)</option>
+                                    <option value="high">Scale-up ($200K+)</option>
+                                    <option value="enterprise">Enterprise ($500K+)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Industry Focus</label>
+                                <select id="interest" class="premium-input w-full">
+                                    <option value="technology">Technology</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="service">Service</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="realestate">Real Estate</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="getBusinessIdeas()" class="premium-button glow-effect mt-4">
+                            <i class="fas fa-lightbulb mr-2"></i>Generate Business Ideas
+                        </button>
+                    </div>
+
+                    <div id="businessResults" class="hidden">
+                        <h2 class="text-xl font-bold text-white mb-4">AI-Recommended Business Ideas</h2>
+                        <div id="businessContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- International Markets Tab -->
+            <div id="international" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-8 slide-in">
+                        <h1 class="text-4xl font-bold text-white mb-2">Global Market Intelligence</h1>
+                        <p class="text-purple-100 text-lg">International demand analysis and market opportunities</p>
+                    </div>
+                    
+                    <div class="premium-card p-6 mb-6 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Market Demand Analysis</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Product Category</label>
+                                <select id="productType" class="premium-input w-full">
+                                    <option value="electronics">Electronics</option>
+                                    <option value="clothing">Clothing</option>
+                                    <option value="food">Food Products</option>
+                                    <option value="software">Software</option>
+                                    <option value="machinery">Machinery</option>
+                                    <option value="automotive">Automotive</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Target Region</label>
+                                <select id="targetRegion" class="premium-input w-full">
+                                    <option value="asia">Asia</option>
+                                    <option value="europe">Europe</option>
+                                    <option value="americas">Americas</option>
+                                    <option value="africa">Africa</option>
+                                    <option value="middle-east">Middle East</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="analyzeInternationalDemand()" class="premium-button glow-effect mt-4">
+                            <i class="fas fa-globe mr-2"></i>Analyze Global Markets
+                        </button>
+                    </div>
+
+                    <div id="internationalResults" class="hidden">
+                        <h2 class="text-xl font-bold text-white mb-4">Market Analysis Results</h2>
+                        <div id="internationalContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dealer Finder Tab -->
+            <div id="dealers" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-8 slide-in">
+                        <h1 class="text-4xl font-bold text-white mb-2">Global Partner Network</h1>
+                        <p class="text-purple-100 text-lg">Connect with verified dealers worldwide</p>
+                    </div>
+                    
+                    <div class="premium-card p-6 mb-6 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Find Business Partners</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Product Type</label>
+                                <select id="dealerProductType" class="premium-input w-full">
+                                    <option value="electronics">Electronics</option>
+                                    <option value="machinery">Machinery</option>
+                                    <option value="textiles">Textiles</option>
+                                    <option value="automotive">Automotive</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Geographic Region</label>
+                                <select id="dealerRegion" class="premium-input w-full">
+                                    <option value="asia">Asia</option>
+                                    <option value="europe">Europe</option>
+                                    <option value="americas">Americas</option>
+                                    <option value="middle-east">Middle East</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="findDealers()" class="premium-button glow-effect mt-4">
+                            <i class="fas fa-search mr-2"></i>Discover Partners
+                        </button>
+                    </div>
+
+                    <div id="dealerResults" class="hidden">
+                        <h2 class="text-xl font-bold text-white mb-4">Recommended Partners</h2>
+                        <div id="dealerContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Routes Tab -->
+            <div id="export" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-8 slide-in">
+                        <h1 class="text-4xl font-bold text-white mb-2">Smart Route Optimizer</h1>
+                        <p class="text-purple-100 text-lg">Efficient logistics planning for global trade</p>
+                    </div>
+                    
+                    <div class="premium-card p-6 mb-6 fade-in">
+                        <h2 class="text-xl font-bold text-white mb-4">Optimize Shipping Routes</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Origin Country</label>
+                                <input type="text" id="fromCountry" placeholder="Enter origin country" 
+                                       class="premium-input w-full">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">Destination Country</label>
+                                <input type="text" id="toCountry" placeholder="Enter destination country" 
+                                       class="premium-input w-full">
+                            </div>
+                        </div>
+                        <button onclick="optimizeRoute()" class="premium-button glow-effect mt-4">
+                            <i class="fas fa-route mr-2"></i>Optimize Route
+                        </button>
+                    </div>
+
+                    <div id="exportResults" class="hidden">
+                        <h2 class="text-xl font-bold text-white mb-4">Route Optimization Results</h2>
+                        <div id="exportContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chat Widget -->
+        <div id="chatWidget" class="chat-container">
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-lg">AI Business Assistant</h3>
+                    <button onclick="toggleChat()" class="text-white hover:text-purple-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="mb-4">
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3 max-w-xs">
+                        <strong class="text-purple-600">AI:</strong> Hello! I'm your AI business assistant. How can I help you achieve your business goals today?
+                    </div>
+                </div>
+            </div>
+            <div class="flex">
+                <input type="text" id="chatInput" placeholder="Ask me anything about business..." class="chat-input" onkeypress="handleChatKeyPress(event)">
+                <button onclick="sendMessage()" class="premium-button glow-effect">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let currentUser = null;
+        let riskMap = null;
+        let charts = {};
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Auth Functions
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtnText.innerHTML = '<div class="loading-spinner inline-block mr-2"></div>Authenticating...';
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+                const { access_token, user } = response.data;
+                
+                localStorage.setItem('access_token', access_token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+                currentUser = user;
+                
+                document.getElementById('userName').textContent = user.name || email;
+                showMainApp();
+            } catch (error) {
+                // Demo mode
+                currentUser = { name: email.split('@')[0] || 'User', email: email };
+                document.getElementById('userName').textContent = `Welcome back, ${currentUser.name}!`;
+                showMainApp();
+            } finally {
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Access Dashboard';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_data');
+            currentUser = null;
+            showLoginScreen();
+        }
+
+        function showRegister() {
+            alert('Registration feature coming soon!');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            initializeRiskMap();
+            initializeCharts();
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        // Risk Analysis Functions
+        async function analyzeRisk() {
+            const location = document.getElementById('riskLocation').value;
+            const riskType = document.getElementById('riskType').value;
+            
+            if (!location) {
+                alert('Please enter a location');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/risk/analyze`, { location, risk_type: riskType });
+                displayRiskResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayRiskResults(getDemoRiskData());
+            }
+        }
+
+        function displayRiskResults(data) {
+            const resultsDiv = document.getElementById('riskResults');
+            const contentDiv = document.getElementById('riskContent');
+            
+            contentDiv.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white bg-opacity-10 p-4 rounded-lg">
+                        <h3 class="font-bold text-lg text-purple-600 mb-2">Overall Risk Level</h3>
+                        <div class="text-4xl font-bold ${data.risk_level === 'Low' ? 'text-green-400' : data.risk_level === 'Medium' ? 'text-yellow-400' : 'text-red-400'}">
+                            ${data.risk_level}
+                        </div>
+                        <div class="text-xl text-white mt-2">${data.risk_percentage}%</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-4 rounded-lg">
+                        <h3 class="font-bold text-lg text-purple-600 mb-2">Risk Factors</h3>
+                        <ul class="space-y-2">
+                            ${Object.entries(data.factors).map(([key, value]) => 
+                                `<li class="text-sm text-gray-700">
+                                    <span class="font-medium">${key.replace(/_/g, ' ')}:</span> ${value}
+                                </li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h3 class="font-bold text-lg text-purple-600 mb-2">Recommendations</h3>
+                    <ul class="space-y-2">
+                        ${data.recommendations.map(rec => 
+                            `<li class="text-sm text-gray-700 flex items-start">
+                                <i class="fas fa-check-circle text-green-400 mr-2 mt-1"></i>
+                                ${rec}
+                            </li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Business Ideas Functions
+        async function getBusinessIdeas() {
+            const budget = document.getElementById('budget').value;
+            const interest = document.getElementById('interest').value;
+            
+            try {
+                const response = await axios.post(`${API_BASE}/api/business/recommend`, { budget, interest });
+                displayBusinessResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayBusinessResults(getDemoBusinessIdeas());
+            }
+        }
+
+        function displayBusinessResults(recommendations) {
+            const resultsDiv = document.getElementById('businessResults');
+            const contentDiv = document.getElementById('businessContent');
+            
+            contentDiv.innerHTML = recommendations.map(rec => `
+                <div class="premium-card p-6 mb-4 hover:scale-105 transition-transform">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold text-white">${rec.business_type}</h3>
+                        <div class="px-3 py-1 rounded-full text-sm font-medium text-green-400 bg-green-600 bg-opacity-20">
+                            ${rec.success_probability}% Success
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-purple-200">Initial Investment</p>
+                            <p class="text-2xl font-bold text-white">$${rec.initial_investment.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-purple-200">Expected ROI</p>
+                            <p class="text-2xl font-bold text-green-400">${rec.expected_roi}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-purple-200">Market Demand</p>
+                            <p class="text-xl font-semibold text-blue-400">${rec.market_demand}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // International Markets Functions
+        async function analyzeInternationalDemand() {
+            const productType = document.getElementById('productType').value;
+            const targetRegion = document.getElementById('targetRegion').value;
+            
+            if (!productType) {
+                alert('Please select a product type');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/international/demand`, { 
+                    product_type: productType, 
+                    target_region: targetRegion 
+                });
+                displayInternationalResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayInternationalResults(getDemoInternationalData());
+            }
+        }
+
+        function displayInternationalResults(forecast) {
+            const resultsDiv = document.getElementById('internationalResults');
+            const contentDiv = document.getElementById('internationalContent');
+            
+            contentDiv.innerHTML = `
+                <h2 class="text-xl font-bold text-white mb-4">Demand Forecast for ${document.getElementById('productType').value}</h2>
+                <div class="overflow-x-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${forecast.map(market => `
+                            <div class="premium-card p-4">
+                                <h3 class="font-bold text-lg text-white mb-2">${market.country}</h3>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-purple-200">Demand Score</span>
+                                        <div class="px-3 py-1 rounded-full text-sm font-medium text-blue-400 bg-blue-600 bg-opacity-20">
+                                            ${market.demand_score}/100
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-purple-200">Market Size</span>
+                                        <div class="text-lg font-bold text-white">${market.market_size}</div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-purple-200">Growth Rate</span>
+                                        <div class="text-lg font-bold text-green-400">${market.growth_rate}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Dealer Finder Functions
+        async function findDealers() {
+            const productType = document.getElementById('dealerProductType').value;
+            const region = document.getElementById('dealerRegion').value;
+            
+            if (!productType) {
+                alert('Please select a product type');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/dealers/find`, { 
+                    product_type: productType, 
+                    region: region 
+                });
+                displayDealerResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayDealerResults(getDemoDealers());
+            }
+        }
+
+        function displayDealerResults(dealers) {
+            const resultsDiv = document.getElementById('dealerResults');
+            const contentDiv = document.getElementById('dealerContent');
+            
+            contentDiv.innerHTML = dealers.map(dealer => `
+                <div class="premium-card p-6 mb-4 hover:scale-105 transition-transform">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold text-white">${dealer.company_name}</h3>
+                        <div class="px-3 py-1 rounded-full text-sm font-medium text-blue-400 bg-blue-600 bg-opacity-20">
+                            ${dealer.rating}/5 Stars
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-purple-200">Location</p>
+                            <p class="text-lg font-semibold text-white">${dealer.location}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-purple-200">Specialization</p>
+                            <p class="text-xl font-semibold text-blue-400">${dealer.specialization}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-purple-200">Contact</p>
+                            <p class="text-lg font-semibold text-green-400">${dealer.contact}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Export Route Functions
+        async function optimizeRoute() {
+            const fromCountry = document.getElementById('fromCountry').value;
+            const toCountry = document.getElementById('toCountry').value;
+            
+            if (!fromCountry || !toCountry) {
+                alert('Please enter both origin and destination countries');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/export/optimize`, { 
+                    from_country: fromCountry, 
+                    to_country: toCountry 
+                });
+                displayExportResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayExportResults(getDemoExportRoute());
+            }
+        }
+
+        function displayExportResults(routeData) {
+            const resultsDiv = document.getElementById('exportResults');
+            const contentDiv = document.getElementById('exportContent');
+            
+            contentDiv.innerHTML = `
+                <div class="premium-card p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">Optimized Route: ${routeData.from_country} → ${routeData.to_country}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-sm text-purple-200">Distance</p>
+                            <p class="text-2xl font-bold text-white">${routeData.distance.toLocaleString()} km</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-purple-200">Estimated Cost</p>
+                            <p class="text-2xl font-bold text-blue-400">$${routeData.cost.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-purple-200">Transit Time</p>
+                            <p class="text-2xl font-bold text-white">${routeData.transit_time} days</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-purple-200">Recommended Method</p>
+                            <p class="text-xl font-semibold text-green-400">${routeData.shipping_method}</p>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-bold text-lg text-white mb-2">Route Benefits</h4>
+                        <ul class="space-y-2">
+                            ${routeData.benefits.map(benefit => 
+                                `<li class="text-sm text-gray-700">
+                                    <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                                    ${benefit}
+                                </li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Chat Functions
+        function toggleChat() {
+            const chatWidget = document.getElementById('chatWidget');
+            chatWidget.style.display = chatWidget.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('chatMessages');
+            
+            // Add user message
+            messagesDiv.innerHTML += `
+                <div class="mb-4">
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3 max-w-xs">
+                        <strong class="text-purple-600">You:</strong> ${message}
+                    </div>
+                </div>
+            `;
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(message);
+                messagesDiv.innerHTML += `
+                    <div class="mb-4">
+                        <div class="bg-white bg-opacity-10 rounded-lg p-3 max-w-xs">
+                            <strong class="text-purple-600">AI:</strong> ${aiResponse}
+                        </div>
+                    </div>
+                `;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 1000);
+            
+            input.value = '';
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function generateAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('business')) {
+                return "I can help you with comprehensive business planning! I offer market analysis, risk assessment, business recommendations, and international trade insights. What specific business area would you like to explore?";
+            } else if (lowerMessage.includes('risk')) {
+                return "Risk analysis is crucial for business success. I can assess flood, earthquake, and other environmental risks for any location. Would you like me to analyze a specific area?";
+            } else if (lowerMessage.includes('export')) {
+                return "Export planning requires careful route optimization. I can help you find the most cost-effective shipping routes, calculate costs, and suggest reliable logistics partners. What products are you planning to export?";
+            } else if (lowerMessage.includes('market')) {
+                return "Market intelligence is key for business growth. I can analyze international demand, identify emerging markets, and provide competitive insights. Which market or region interests you?";
+            } else if (lowerMessage.includes('help')) {
+                return "I'm here to help you with your business growth! I can assist with:\n\n📊 Market Analysis\n🛡️ Risk Assessment\n💡 Business Ideas\n🌍 International Markets\n🚚 Export Optimization\n📈 Growth Forecasting\n\nWhat specific challenge or opportunity are you facing?";
+            } else {
+                return "I'm your AI business assistant! I can provide comprehensive analysis and recommendations across all business areas. What specific challenge or opportunity are you facing?";
+            }
+        }
+
+        // Map Initialization
+        function initializeRiskMap() {
+            setTimeout(() => {
+                const mapContainer = document.getElementById('riskMap');
+                if (mapContainer && !riskMap) {
+                    riskMap = L.map('riskMap').setView([30.0, 70.0], 2);
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(riskMap);
+                    
+                    // Add sample risk markers
+                    const riskLocations = [
+                        {lat: 31.5, lng: 74.3, risk: 'Low', city: 'Lahore'},
+                        {lat: 24.9, lng: 67.1, risk: 'Medium', city: 'Karachi'},
+                        {lat: 28.6, lng: 77.2, risk: 'High', city: 'Delhi'}
+                    ];
+                    
+                    riskLocations.forEach(loc => {
+                        const color = loc.risk === 'Low' ? 'green' : loc.risk === 'Medium' ? 'orange' : 'red';
+                        L.marker([loc.lat, loc.lng])
+                            .addTo(riskMap)
+                            .bindPopup(`<b>${loc.city}</b><br>Risk Level: ${loc.risk}`)
+                            .openPopup();
+                    });
+                }
+            }, 1000);
+        }
+
+        // Chart Initialization
+        function initializeCharts() {
+            setTimeout(() => {
+                // Revenue Chart
+                const revenueCtx = document.getElementById('revenueChart');
+                if (revenueCtx) {
+                    charts.revenue = new Chart(revenueCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                            datasets: [{
+                                label: 'Revenue ($)',
+                                data: [65000, 72000, 68000, 81000, 78000, 92000],
+                                borderColor: 'rgba(102, 126, 234, 1)',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Growth Chart
+                const growthCtx = document.getElementById('growthChart');
+                if (growthCtx) {
+                    charts.growth = new Chart(growthCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                            datasets: [{
+                                label: 'Growth Rate (%)',
+                                data: [15, 18, 22, 25],
+                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 30
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 1500);
+        }
+
+        // Demo Data Functions
+        function getDemoRiskData() {
+            return {
+                location: 'Demo Location',
+                risk_percentage: 25,
+                risk_level: 'Low',
+                factors: { 
+                    rainfall: 'moderate', 
+                    river_proximity: '5km', 
+                    historical_floods: 'low',
+                    seismic_activity: 'stable'
+                },
+                recommendations: [
+                    'Location is relatively safe for business operations',
+                    'Consider comprehensive insurance coverage',
+                    'Monitor weather patterns during seasonal changes',
+                    'Implement flood protection measures',
+                    'Regular structural inspections recommended'
+                ]
+            };
+        }
+
+        function getDemoBusinessIdeas() {
+            return [
+                {
+                    business_type: 'E-commerce Platform',
+                    success_probability: 82,
+                    initial_investment: 2200000,
+                    expected_roi: '28-32%',
+                    market_demand: 'High',
+                    competition: 'Medium'
+                },
+                {
+                    business_type: 'Digital Marketing Agency',
+                    success_probability: 75,
+                    initial_investment: 1800000,
+                    expected_roi: '22-28%',
+                    market_demand: 'High',
+                    competition: 'High'
+                },
+                {
+                    business_type: 'SaaS Development',
+                    success_probability: 88,
+                    initial_investment: 2800000,
+                    expected_roi: '35-40%',
+                    market_demand: 'Medium',
+                    competition: 'Low'
+                }
+            ];
+        }
+
+        function getDemoInternationalData() {
+            return [
+                {
+                    country: 'UAE',
+                    demand_score: 92,
+                    market_size: '$3.8B',
+                    growth_rate: '+18%',
+                    competition: 'Medium',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Saudi Arabia',
+                    demand_score: 85,
+                    market_size: '$2.9B',
+                    growth_rate: '+15%',
+                    competition: 'High',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Singapore',
+                    demand_score: 78,
+                    market_size: '$1.7B',
+                    growth_rate: '+12%',
+                    competition: 'High',
+                    trade_barriers: 'Very Low'
+                }
+            ];
+        }
+
+        function getDemoDealers() {
+            return [
+                {
+                    company_name: 'Global Trade Partners Inc.',
+                    rating: 4.9,
+                    location: 'Dubai, UAE',
+                    specialization: 'Import/Export Services',
+                    contact: '+971-4-555-0123'
+                },
+                {
+                    company_name: 'International Logistics Co.',
+                    rating: 4.7,
+                    location: 'Singapore',
+                    specialization: 'Supply Chain Management',
+                    contact: '+65-6-123-4567'
+                }
+            ];
+        }
+
+        function getDemoExportRoute() {
+            return {
+                from_country: document.getElementById('fromCountry').value || 'China',
+                to_country: document.getElementById('toCountry').value || 'UAE',
+                distance: 6234,
+                cost: 180000,
+                transit_time: 21,
+                shipping_method: 'Sea Freight + Land Transport',
+                benefits: [
+                    'Cost-effective route through Strait of Hormuz',
+                    'Reduced customs processing time',
+                    'Multiple port options available',
+                    'Reliable shipping schedule'
+                ]
+            };
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('user_data');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('userName').textContent = `Welcome back, ${currentUser.name || currentUser.email}!`;
+                showMainApp();
+            }
+        });
+    </script>
+</body>
+</html>

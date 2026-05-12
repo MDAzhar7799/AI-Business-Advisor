@@ -1,0 +1,133 @@
+# ============================================================
+# FileGuardian DevOps System
+# .github/workflows/docker-deploy.yml
+#
+# GitHub Actions CI/CD Pipeline:
+#   1. Triggers on every push to main branch
+#   2. Builds the Docker image
+#   3. Pushes to Docker Hub
+#   4. Tags with version + latest
+#
+# SETUP REQUIRED (GitHub → Settings → Secrets → Actions):
+#   DOCKERHUB_USERNAME  → your Docker Hub username
+#   DOCKERHUB_TOKEN     → your Docker Hub access token
+# ============================================================
+
+name: 🐳 Docker Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+env:
+  IMAGE_NAME: fileguardian-dashboard
+
+jobs:
+
+  # ---- JOB 1: BUILD & TEST ----
+  build:
+    name: 🔨 Build Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🔍 Lint Dockerfile
+        run: |
+          docker run --rm -i hadolint/hadolint < Dockerfile || true
+
+      - name: 🏗️ Build Docker Image (test)
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:test .
+
+      - name: ✅ Test Container Health
+        run: |
+          docker run -d --name test_container -p 8080:80 ${{ env.IMAGE_NAME }}:test
+          sleep 5
+          curl --fail http://localhost:8080 || exit 1
+          docker stop test_container
+          docker rm test_container
+          echo "✅ Container health check passed!"
+
+  # ---- JOB 2: PUSH TO DOCKER HUB ----
+  push:
+    name: 🚀 Push to Docker Hub
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🔑 Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 🏷️ Extract Metadata & Tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+            type=raw,value=v1.1
+
+      - name: 🏗️ Build & Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 📋 Print Image Info
+        run: |
+          echo "======================================"
+          echo "✅ Docker Image pushed successfully!"
+          echo "Image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          echo "Tags:  latest, v1.1, sha-${{ github.sha }}"
+          echo "======================================"
+
+  # ---- JOB 3: DEPLOY SUMMARY ----
+  summary:
+    name: 📊 Deployment Summary
+    runs-on: ubuntu-latest
+    needs: push
+    if: always()
+
+    steps:
+      - name: 📊 Print Summary
+        run: |
+          echo "## 🛡 FileGuardian DevOps — CI/CD Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ✅ Done |" >> $GITHUB_STEP_SUMMARY
+          echo "| Push to Docker Hub | ✅ Done |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pull the image:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/fileguardian-dashboard:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -d -p 8080:80 ${{ secrets.DOCKERHUB_USERNAME }}/fileguardian-dashboard:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

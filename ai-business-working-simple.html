@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Business Advisor - Working Simple Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .premium-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .premium-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .premium-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .premium-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        
+        .premium-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .tab-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .chat-input {
+            padding: 10px;
+            border: none;
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+            <div style="width: 400px; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: white; font-size: 28px; font-weight: bold; margin: 0 0 8px;">AI Business Advisor</h1>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 16px; margin: 0;">Smart Business Intelligence Platform</p>
+                </div>
+                
+                <div class="glass-card" style="padding: 30px;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Email Address</label>
+                        <input type="email" id="loginEmail" placeholder="Enter your email" class="premium-input">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" class="premium-input">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <button onclick="login()" id="loginBtn" class="premium-button">
+                            <span id="loginBtnText">Access Dashboard</span>
+                        </button>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px;">Demo: Use any email/password to access</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (hidden initially) -->
+        <div id="mainApp" style="display: none;">
+            <!-- Navigation -->
+            <nav style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 16px 0; margin-bottom: 24px;">
+                <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <span style="color: white; font-size: 20px; font-weight: bold;">AI Business Advisor</span>
+                        <span style="background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">LIVE</span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="showTab('dashboard')" id="nav-dashboard" class="tab-button active">
+                            <i class="fas fa-tachometer-alt" style="margin-right: 8px;"></i>Dashboard
+                        </button>
+                        <button onclick="showTab('risk')" id="nav-risk" class="tab-button">
+                            <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Risk Analysis
+                        </button>
+                        <button onclick="showTab('business')" id="nav-business" class="tab-button">
+                            <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>Business Ideas
+                        </button>
+                        <button onclick="showTab('international')" id="nav-international" class="tab-button">
+                            <i class="fas fa-globe" style="margin-right: 8px;"></i>International Markets
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span id="userName" style="color: white; margin-right: 16px;">Welcome!</span>
+                        <button onclick="toggleChat()" class="premium-button">
+                            <i class="fas fa-robot" style="margin-right: 8px;"></i>AI Chat
+                        </button>
+                        <button onclick="logout()" style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px;">
+                            <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <h1 style="color: white; font-size: 28px; font-weight: bold; margin-bottom: 16px;">Business Dashboard</h1>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 16px; margin-bottom: 32px;">Real-time insights for strategic growth</p>
+
+                    <!-- Metrics Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 32px;">
+                        <div class="metric-card">
+                            <div style="color: #9ca3af; font-size: 14px; margin-bottom: 8px;">Total Revenue</div>
+                            <div style="color: white; font-size: 24px; font-weight: bold;">$847,293</div>
+                            <div style="color: #10b981; font-size: 14px; margin-top: 8px;">
+                                <i class="fas fa-arrow-up"></i> +23.5% this quarter
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div style="color: #9ca3af; font-size: 14px; margin-bottom: 8px;">Active Projects</div>
+                            <div style="color: white; font-size: 24px; font-weight: bold;">142</div>
+                            <div style="color: #3b82f6; font-size: 14px; margin-top: 8px;">
+                                <i class="fas fa-plus-circle"></i> +12 new this month
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div style="color: #9ca3af; font-size: 14px; margin-bottom: 8px;">Growth Rate</div>
+                            <div style="color: white; font-size: 24px; font-weight: bold;">34.7%</div>
+                            <div style="color: #f59e0b; font-size: 14px; margin-top: 8px;">
+                                <i class="fas fa-rocket"></i> Above industry average
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div style="color: #9ca3af; font-size: 14px; margin-bottom: 8px;">Success Rate</div>
+                            <div style="color: white; font-size: 24px; font-weight: bold;">91.2%</div>
+                            <div style="color: #8b5cf6; font-size: 14px; margin-top: 8px;">
+                                <i class="fas fa-star"></i> Excellent performance
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 32px;">
+                        <div class="glass-card" style="padding: 24px;">
+                            <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Revenue Analytics</h2>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-card" style="padding: 24px;">
+                            <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Growth Forecast</h2>
+                            <div class="chart-container">
+                                <canvas id="growthChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="glass-card" style="padding: 24px;">
+                        <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Recent Activity</h2>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; align-items: center; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                                <div style="width: 12px; height: 12px; background: #10b981; border-radius: 50%; margin-right: 12px;"></div>
+                                <div>
+                                    <p style="color: white; font-size: 14px; font-weight: bold; margin: 0;">New partnership secured</p>
+                                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Strategic alliance with Global Tech Corp</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                                <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; margin-right: 12px;"></div>
+                                <div>
+                                    <p style="color: white; font-size: 14px; font-weight: bold; margin: 0;">Market analysis completed</p>
+                                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">International demand forecast updated</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                                <div style="width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; margin-right: 12px;"></div>
+                                <div>
+                                    <p style="color: white; font-size: 14px; font-weight: bold; margin: 0;">Risk assessment completed</p>
+                                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Comprehensive analysis for 3 new locations</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Analysis Tab -->
+                <div id="risk" class="tab-content">
+                    <h1 style="color: white; font-size: 28px; font-weight: bold; margin-bottom: 16px;">Risk Analysis Center</h1>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 16px; margin-bottom: 32px;">Advanced risk assessment for informed decisions</p>
+                    
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Location Risk Assessment</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                            <div>
+                                <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Location</label>
+                                <input type="text" id="riskLocation" placeholder="Enter city or region" class="premium-input">
+                            </div>
+                            <div>
+                                <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Analysis Type</label>
+                                <select id="riskType" class="premium-input">
+                                    <option value="flood">Flood Risk</option>
+                                    <option value="earthquake">Earthquake Risk</option>
+                                    <option value="both">Combined Analysis</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="analyzeRisk()" class="premium-button" style="margin-top: 16px;">
+                            <i class="fas fa-search" style="margin-right: 8px;"></i>Analyze Risk
+                        </button>
+                    </div>
+
+                    <div id="riskResults" style="display: none;">
+                        <div class="glass-card" style="padding: 24px;">
+                            <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Risk Assessment Results</h2>
+                            <div id="riskContent"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Ideas Tab -->
+                <div id="business" class="tab-content">
+                    <h1 style="color: white; font-size: 28px; font-weight: bold; margin-bottom: 16px;">Business Innovation Hub</h1>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 16px; margin-bottom: 32px;">AI-powered business recommendations</p>
+                    
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Discover Business Opportunities</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                            <div>
+                                <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Investment Budget</label>
+                                <select id="budget" class="premium-input">
+                                    <option value="low">Low ($0 - $50K)</option>
+                                    <option value="medium">Medium ($50K - $200K)</option>
+                                    <option value="high">High ($200K+)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Interest Area</label>
+                                <select id="interest" class="premium-input">
+                                    <option value="technology">Technology</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="service">Service</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="getBusinessIdeas()" class="premium-button" style="margin-top: 16px;">
+                            <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>Generate Ideas
+                        </button>
+                    </div>
+
+                    <div id="businessResults" style="display: none;">
+                        <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Recommended Business Ideas</h2>
+                        <div id="businessContent"></div>
+                    </div>
+                </div>
+
+                <!-- International Markets Tab -->
+                <div id="international" class="tab-content">
+                    <h1 style="color: white; font-size: 28px; font-weight: bold; margin-bottom: 16px;">Global Market Intelligence</h1>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 16px; margin-bottom: 32px;">International demand analysis and forecasting</p>
+                    
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Market Demand Analysis</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                            <div>
+                                <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Product Category</label>
+                                <select id="productType" class="premium-input">
+                                    <option value="electronics">Electronics</option>
+                                    <option value="clothing">Clothing</option>
+                                    <option value="food">Food Products</option>
+                                    <option value="software">Software</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color: white; font-size: 14px; display: block; margin-bottom: 8px;">Target Region</label>
+                                <select id="targetRegion" class="premium-input">
+                                    <option value="asia">Asia</option>
+                                    <option value="europe">Europe</option>
+                                    <option value="americas">Americas</option>
+                                    <option value="africa">Africa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="analyzeInternationalDemand()" class="premium-button" style="margin-top: 16px;">
+                            <i class="fas fa-globe" style="margin-right: 8px;"></i>Analyze Markets
+                        </button>
+                    </div>
+
+                    <div id="internationalResults" style="display: none;">
+                        <h2 style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 16px;">Market Analysis Results</h2>
+                        <div id="internationalContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chat Widget -->
+        <div id="chatWidget" class="chat-container">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px; border-radius: 12px 12px 0 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-weight: bold; margin: 0;">AI Business Assistant</h3>
+                    <button onclick="toggleChat()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div style="margin-bottom: 12px;">
+                    <div style="background: rgba(102, 126, 234, 0.1); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #667eea;">AI:</strong> Hello! I'm your AI business assistant. How can I help you today?
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; padding: 12px;">
+                <input type="text" id="chatInput" placeholder="Ask me anything about business..." class="chat-input" onkeypress="handleChatKeyPress(event)">
+                <button onclick="sendMessage()" style="background: #667eea; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let currentUser = null;
+        let charts = {};
+
+        // Tab Management
+        function showTab(tabName) {
+            console.log('Showing tab:', tabName);
+            
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            const selectedTab = document.getElementById(tabName);
+            if (selectedTab) {
+                selectedTab.style.display = 'block';
+            }
+            
+            // Add active class to clicked button
+            const activeButton = document.getElementById('nav-' + tabName);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
+        }
+
+        // Auth Functions
+        async function login() {
+            console.log('Login function called');
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtnText.innerHTML = 'Authenticating...';
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+                const { access_token, user } = response.data;
+                
+                localStorage.setItem('access_token', access_token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+                currentUser = user;
+                
+                document.getElementById('userName').textContent = user.name || email;
+                showMainApp();
+            } catch (error) {
+                // Demo mode
+                currentUser = { name: email.split('@')[0] || 'User', email: email };
+                document.getElementById('userName').textContent = `Welcome, ${currentUser.name}!`;
+                showMainApp();
+            } finally {
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Access Dashboard';
+            }
+        }
+
+        function logout() {
+            console.log('Logout function called');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_data');
+            currentUser = null;
+            showLoginScreen();
+        }
+
+        function showMainApp() {
+            console.log('Showing main app');
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            initializeCharts();
+        }
+
+        function showLoginScreen() {
+            console.log('Showing login screen');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        // Risk Analysis Functions
+        async function analyzeRisk() {
+            console.log('Analyzing risk');
+            const location = document.getElementById('riskLocation').value;
+            const riskType = document.getElementById('riskType').value;
+            
+            if (!location) {
+                alert('Please enter a location');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/risk/analyze`, { location, risk_type: riskType });
+                displayRiskResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayRiskResults(getDemoRiskData());
+            }
+        }
+
+        function displayRiskResults(data) {
+            console.log('Displaying risk results:', data);
+            const resultsDiv = document.getElementById('riskResults');
+            const contentDiv = document.getElementById('riskContent');
+            
+            contentDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 8px;">
+                        <h3 style="color: white; font-size: 16px; margin-bottom: 8px;">Risk Level</h3>
+                        <div style="color: ${data.risk_level === 'Low' ? '#10b981' : data.risk_level === 'Medium' ? '#f59e0b' : '#ef4444'}; font-size: 24px; font-weight: bold;">
+                            ${data.risk_level}
+                        </div>
+                        <div style="color: white; font-size: 18px; margin-top: 4px;">${data.risk_percentage}%</div>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 8px;">
+                        <h3 style="color: white; font-size: 16px; margin-bottom: 8px;">Key Factors</h3>
+                        <ul style="color: white; font-size: 14px; list-style: none; padding: 0;">
+                            ${Object.entries(data.factors).map(([key, value]) => 
+                                `<li style="margin-bottom: 4px;">
+                                    <strong>${key.replace(/_/g, ' ')}:</strong> ${value}
+                                </li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <h3 style="color: white; font-size: 16px; margin-bottom: 8px;">Recommendations</h3>
+                    <ul style="color: white; font-size: 14px; list-style: none; padding: 0;">
+                        ${data.recommendations.map(rec => 
+                            `<li style="margin-bottom: 8px;">
+                                <i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>
+                                ${rec}
+                            </li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        // Business Ideas Functions
+        async function getBusinessIdeas() {
+            console.log('Getting business ideas');
+            const budget = document.getElementById('budget').value;
+            const interest = document.getElementById('interest').value;
+            
+            try {
+                const response = await axios.post(`${API_BASE}/api/business/recommend`, { budget, interest });
+                displayBusinessResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayBusinessResults(getDemoBusinessIdeas());
+            }
+        }
+
+        function displayBusinessResults(recommendations) {
+            console.log('Displaying business results:', recommendations);
+            const resultsDiv = document.getElementById('businessResults');
+            const contentDiv = document.getElementById('businessContent');
+            
+            contentDiv.innerHTML = recommendations.map(rec => `
+                <div class="glass-card" style="padding: 20px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="color: white; font-size: 18px; font-weight: bold;">${rec.business_type}</h3>
+                        <div style="background: #10b981; color: white; padding: 4px 8px; border-radius: 20px; font-size: 12px;">
+                            ${rec.success_probability}% Success
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                        <div>
+                            <p style="color: #9ca3af; font-size: 12px;">Initial Investment</p>
+                            <p style="color: white; font-size: 18px; font-weight: bold;">$${rec.initial_investment.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p style="color: #9ca3af; font-size: 12px;">Expected ROI</p>
+                            <p style="color: #10b981; font-size: 18px; font-weight: bold;">${rec.expected_roi}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        // International Markets Functions
+        async function analyzeInternationalDemand() {
+            console.log('Analyzing international demand');
+            const productType = document.getElementById('productType').value;
+            const targetRegion = document.getElementById('targetRegion').value;
+            
+            if (!productType) {
+                alert('Please select a product type');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/international/demand`, { 
+                    product_type: productType, 
+                    target_region: targetRegion 
+                });
+                displayInternationalResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayInternationalResults(getDemoInternationalData());
+            }
+        }
+
+        function displayInternationalResults(forecast) {
+            console.log('Displaying international results:', forecast);
+            const resultsDiv = document.getElementById('internationalResults');
+            const contentDiv = document.getElementById('internationalContent');
+            
+            contentDiv.innerHTML = `
+                <h2 style="color: white; font-size: 18px; margin-bottom: 16px;">Demand Forecast for ${document.getElementById('productType').value}</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                    ${forecast.map(market => `
+                        <div class="glass-card" style="padding: 16px;">
+                            <h3 style="color: white; font-size: 16px; margin-bottom: 8px;">${market.country}</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+                                <div>
+                                    <p style="color: #9ca3af; font-size: 12px;">Demand Score</p>
+                                    <div style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; text-align: center;">
+                                        ${market.demand_score}/100
+                                    </div>
+                                </div>
+                                <div>
+                                    <p style="color: #9ca3af; font-size: 12px;">Market Size</p>
+                                    <div style="color: white; font-size: 16px; font-weight: bold;">${market.market_size}</div>
+                                </div>
+                                <div>
+                                    <p style="color: #9ca3af; font-size: 12px;">Growth Rate</p>
+                                    <div style="color: #10b981; font-size: 16px; font-weight: bold;">${market.growth_rate}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        // Chat Functions
+        function toggleChat() {
+            const chatWidget = document.getElementById('chatWidget');
+            chatWidget.style.display = chatWidget.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('chatMessages');
+            
+            // Add user message
+            messagesDiv.innerHTML += `
+                <div style="margin-bottom: 12px;">
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #3b82f6;">You:</strong> ${message}
+                    </div>
+                </div>
+            `;
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(message);
+                messagesDiv.innerHTML += `
+                    <div style="margin-bottom: 12px;">
+                        <div style="background: rgba(102, 126, 234, 0.1); padding: 12px; border-radius: 8px;">
+                            <strong style="color: #667eea;">AI:</strong> ${aiResponse}
+                        </div>
+                    </div>
+                `;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 1000);
+            
+            input.value = '';
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function generateAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('business')) {
+                return "I can help you with comprehensive business planning! I offer market analysis, risk assessment, business recommendations, and international trade insights. What specific business area would you like to explore?";
+            } else if (lowerMessage.includes('risk')) {
+                return "Risk analysis is crucial for business success. I can assess flood, earthquake, and other environmental risks for any location. Would you like me to analyze a specific area?";
+            } else if (lowerMessage.includes('market')) {
+                return "Market intelligence is key for business growth. I can analyze international demand, identify emerging markets, and provide competitive insights. Which market or region interests you?";
+            } else {
+                return "I'm here to help you with your business growth! I can provide comprehensive analysis and recommendations across all business areas. What specific challenge or opportunity are you facing?";
+            }
+        }
+
+        // Chart Initialization
+        function initializeCharts() {
+            setTimeout(() => {
+                // Revenue Chart
+                const revenueCtx = document.getElementById('revenueChart');
+                if (revenueCtx) {
+                    charts.revenue = new Chart(revenueCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                            datasets: [{
+                                label: 'Revenue ($)',
+                                data: [45000, 52000, 48000, 61000, 58000, 67000],
+                                borderColor: 'rgba(102, 126, 234, 1)',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Growth Chart
+                const growthCtx = document.getElementById('growthChart');
+                if (growthCtx) {
+                    charts.growth = new Chart(growthCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                            datasets: [{
+                                label: 'Growth Rate (%)',
+                                data: [12, 15, 18, 23],
+                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 30
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 1000);
+        }
+
+        // Demo Data Functions
+        function getDemoRiskData() {
+            return {
+                location: 'Demo Location',
+                risk_percentage: 25,
+                risk_level: 'Low',
+                factors: { 
+                    rainfall: 'moderate', 
+                    river_proximity: '5km', 
+                    historical_floods: 'low',
+                    seismic_activity: 'stable'
+                },
+                recommendations: [
+                    'Location is relatively safe for business operations',
+                    'Consider comprehensive insurance coverage',
+                    'Monitor weather patterns during seasonal changes',
+                    'Implement flood protection measures'
+                ]
+            };
+        }
+
+        function getDemoBusinessIdeas() {
+            return [
+                {
+                    business_type: 'E-commerce Platform',
+                    success_probability: 78,
+                    initial_investment: 1800000,
+                    expected_roi: '25-30%',
+                    market_demand: 'High',
+                    competition: 'Medium'
+                },
+                {
+                    business_type: 'Digital Marketing Agency',
+                    success_probability: 72,
+                    initial_investment: 1200000,
+                    expected_roi: '20-25%',
+                    market_demand: 'High',
+                    competition: 'High'
+                },
+                {
+                    business_type: 'SaaS Development',
+                    success_probability: 85,
+                    initial_investment: 2500000,
+                    expected_roi: '30-35%',
+                    market_demand: 'Medium',
+                    competition: 'Low'
+                }
+            ];
+        }
+
+        function getDemoInternationalData() {
+            return [
+                {
+                    country: 'UAE',
+                    demand_score: 88,
+                    market_size: '$3.2B',
+                    growth_rate: '+15%',
+                    competition: 'Medium',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Saudi Arabia',
+                    demand_score: 82,
+                    market_size: '$2.8B',
+                    growth_rate: '+12%',
+                    competition: 'High',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Singapore',
+                    demand_score: 75,
+                    market_size: '$1.5B',
+                    growth_rate: '+10%',
+                    competition: 'High',
+                    trade_barriers: 'Very Low'
+                }
+            ];
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('AI Business Advisor loaded successfully');
+            
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('user_data');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('userName').textContent = `Welcome, ${currentUser.name || currentUser.email}!`;
+                showMainApp();
+            }
+        });
+    </script>
+</body>
+</html>

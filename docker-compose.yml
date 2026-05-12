@@ -1,0 +1,80 @@
+# ============================================================
+# FileGuardian DevOps System — docker-compose.yml
+# Runs the web dashboard + monitoring environment
+# Author: MD AZHAR | Version: 1.1
+#
+# Usage:
+#   docker-compose up -d          → Start in background
+#   docker-compose down           → Stop containers
+#   docker-compose logs -f        → View live logs
+#   docker-compose ps             → Check status
+# ============================================================
+
+version: '3.8'
+
+services:
+
+  # ---- Web Dashboard (nginx) ----
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fileguardian-dashboard:latest
+    container_name: fileguardian_dashboard
+    restart: unless-stopped
+    ports:
+      - "8080:80"            # Access at http://localhost:8080
+    volumes:
+      - ./logs:/var/log/nginx   # Persist nginx logs
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - fileguardian_net
+    labels:
+      - "project=FileGuardian"
+      - "author=MD AZHAR"
+      - "version=1.1"
+
+  # ---- File Monitor (Linux + inotify environment) ----
+  monitor:
+    image: ubuntu:22.04
+    container_name: fileguardian_monitor
+    restart: unless-stopped
+    command: >
+      bash -c "
+        apt-get update -qq &&
+        apt-get install -y -qq inotify-tools &&
+        mkdir -p /monitored /backups &&
+        echo '[INFO] FileGuardian Monitor Container Ready' &&
+        echo '[INFO] Run: bash /scripts/monitor_backup.sh' &&
+        tail -f /dev/null
+      "
+    volumes:
+      - ./scripts:/scripts                    # Mount shell scripts
+      - monitored_data:/monitored             # Directory to watch
+      - backup_data:/backups                  # Backup storage
+    networks:
+      - fileguardian_net
+    labels:
+      - "project=FileGuardian"
+      - "role=monitor"
+
+# ---- Named Volumes ----
+volumes:
+  monitored_data:
+    driver: local
+  backup_data:
+    driver: local
+
+# ---- Network ----
+networks:
+  fileguardian_net:
+    driver: bridge
+    name: fileguardian_network

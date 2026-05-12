@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Business Growth Advisor - Premium Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .premium-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+        
+        .premium-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { 
+            transition: all 0.3s ease; 
+            position: relative;
+            overflow: hidden;
+        }
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .tab-button:hover::before {
+            left: 100%;
+        }
+        .tab-button.active { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+        }
+        
+        .premium-input {
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .premium-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .premium-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .premium-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.4);
+        }
+        
+        .premium-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .premium-button:hover::before {
+            left: 100%;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .risk-low { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .risk-medium { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .risk-high { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        
+        .success-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .warning-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .error-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .premium-table {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .premium-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .premium-table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transition: background 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+            <div class="text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading Premium AI Business Advisor...</p>
+            </div>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="hidden min-h-screen gradient-bg flex items-center justify-center">
+            <div class="max-w-md w-full p-8">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-white rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-chart-line text-3xl text-purple-600"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold text-white mb-2">AI Business Advisor</h1>
+                    <p class="text-purple-100">Premium Business Intelligence Platform</p>
+                </div>
+                
+                <div class="premium-card rounded-2xl p-8 space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" id="loginEmail" placeholder="Enter your email" 
+                               class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" 
+                               class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button onclick="login()" id="loginBtn"
+                                class="premium-button flex-1 text-white py-3 rounded-lg font-semibold">
+                            <span id="loginBtnText">Sign In</span>
+                        </button>
+                        <button onclick="showRegister()" 
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold transition-all">
+                            Register
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Demo Mode: Use any credentials to access</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (hidden initially) -->
+        <div id="mainApp" class="hidden min-h-screen">
+            <!-- Premium Navigation -->
+            <nav class="bg-white shadow-lg sticky top-0 z-40">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="flex justify-between h-16 items-center">
+                        <div class="flex items-center space-x-8">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-white"></i>
+                                </div>
+                                <span class="ml-3 font-bold text-xl">AI Business Advisor</span>
+                            </div>
+                            
+                            <div class="hidden md:flex space-x-1">
+                                <button onclick="showTab('dashboard')" class="tab-button active px-4 py-2 text-sm font-medium rounded-lg">Dashboard</button>
+                                <button onclick="showTab('risk')" class="tab-button px-4 py-2 text-sm font-medium rounded-lg">Risk Analysis</button>
+                                <button onclick="showTab('business')" class="tab-button px-4 py-2 text-sm font-medium rounded-lg">Business Ideas</button>
+                                <button onclick="showTab('international')" class="tab-button px-4 py-2 text-sm font-medium rounded-lg">International Markets</button>
+                                <button onclick="showTab('analytics')" class="tab-button px-4 py-2 text-sm font-medium rounded-lg">Analytics</button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="hidden md:block">
+                                <span id="userName" class="text-sm font-medium text-gray-700">Welcome!</span>
+                            </div>
+                            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="max-w-7xl mx-auto px-4 py-8">
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Business Intelligence Dashboard</h1>
+                        <p class="text-gray-600">Real-time insights and analytics for your business growth</p>
+                    </div>
+
+                    <!-- Premium Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="premium-card rounded-2xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Growth Prediction</p>
+                                    <p class="text-3xl font-bold text-gray-900">87%</p>
+                                    <p class="text-sm text-green-600 mt-1">
+                                        <i class="fas fa-arrow-up mr-1"></i>+12% from last month
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="premium-card rounded-2xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Risk Score</p>
+                                    <p class="text-3xl font-bold text-gray-900">18</p>
+                                    <p class="text-sm text-green-600 mt-1">
+                                        <i class="fas fa-shield-alt mr-1"></i>Low Risk Area
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-shield-alt text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="premium-card rounded-2xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Market Opportunities</p>
+                                    <p class="text-3xl font-bold text-gray-900">5</p>
+                                    <p class="text-sm text-blue-600 mt-1">
+                                        <i class="fas fa-globe mr-1"></i>High Potential
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-globe text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="premium-card rounded-2xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Success Rate</p>
+                                    <p class="text-3xl font-bold text-gray-900">92%</p>
+                                    <p class="text-sm text-purple-600 mt-1">
+                                        <i class="fas fa-trophy mr-1"></i>Excellent
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-trophy text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="premium-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Growth Trend</h2>
+                            <div class="chart-container">
+                                <canvas id="growthChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="premium-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Risk Distribution</h2>
+                            <div class="chart-container">
+                                <canvas id="riskChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="premium-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Analysis</h2>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-blue-500 mr-3"></i>
+                                        <span class="text-sm font-medium">Mumbai, India</span>
+                                    </div>
+                                    <span class="text-xs success-badge px-2 py-1 rounded">Low Risk</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-store text-green-500 mr-3"></i>
+                                        <span class="text-sm font-medium">Retail Business</span>
+                                    </div>
+                                    <span class="text-xs success-badge px-2 py-1 rounded">85% Success</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-globe text-purple-500 mr-3"></i>
+                                        <span class="text-sm font-medium">UAE Market</span>
+                                    </div>
+                                    <span class="text-xs success-badge px-2 py-1 rounded">High Demand</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="premium-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Top Recommendations</h2>
+                            <div class="space-y-3">
+                                <div class="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4 border-blue-500">
+                                    <p class="font-medium text-gray-900">Expand to International Markets</p>
+                                    <p class="text-sm text-gray-600">High growth potential in UAE and Saudi Arabia</p>
+                                </div>
+                                <div class="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-l-4 border-green-500">
+                                    <p class="font-medium text-gray-900">Invest in Technology</p>
+                                    <p class="text-sm text-gray-600">Digital transformation shows 30% ROI</p>
+                                </div>
+                                <div class="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-l-4 border-purple-500">
+                                    <p class="font-medium text-gray-900">Risk Mitigation</p>
+                                    <p class="text-sm text-gray-600">Consider flood insurance for coastal areas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Analysis Tab -->
+                <div id="risk" class="tab-content">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Advanced Risk Analysis</h1>
+                        <p class="text-gray-600">Comprehensive location-based risk assessment with AI-powered insights</p>
+                    </div>
+
+                    <div class="premium-card rounded-2xl p-6 mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                                <div class="relative">
+                                    <input type="text" id="riskLocation" placeholder="Enter city, state, or country" 
+                                           class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none pr-10">
+                                    <i class="fas fa-map-marker-alt absolute right-3 top-4 text-gray-400"></i>
+                                </div>
+                                <div id="locationSuggestions" class="hidden absolute z-10 w-full bg-white border border-gray-200 rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Analysis Type</label>
+                                <select id="riskType" class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                                    <option value="both">Both Flood & Earthquake</option>
+                                    <option value="flood">Flood Risk Only</option>
+                                    <option value="earthquake">Earthquake Risk Only</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-end">
+                                <button onclick="analyzeRisk()" id="riskAnalysisBtn"
+                                        class="premium-button w-full text-white py-3 rounded-lg font-semibold">
+                                    <span id="riskBtnText">Analyze Risk</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="riskLoading" class="hidden text-center py-8">
+                            <div class="loading-spinner mx-auto mb-4"></div>
+                            <p class="text-gray-600">Analyzing location risks...</p>
+                        </div>
+
+                        <div id="riskResults" class="hidden">
+                            <!-- Results will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Ideas Tab -->
+                <div id="business" class="tab-content">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">AI Business Recommendations</h1>
+                        <p class="text-gray-600">Personalized business suggestions based on market analysis and AI predictions</p>
+                    </div>
+
+                    <div class="premium-card rounded-2xl p-6 mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range (INR)</label>
+                                <select id="businessBudget" class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                                    <option value="500000">5 Lakhs - 10 Lakhs</option>
+                                    <option value="1500000">10 Lakhs - 25 Lakhs</option>
+                                    <option value="3000000">25 Lakhs - 50 Lakhs</option>
+                                    <option value="5000000">50 Lakhs - 1 Crore</option>
+                                    <option value="10000000">1 Crore+</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                                <input type="text" id="businessLocation" placeholder="Enter your preferred location" 
+                                       class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                                <select id="businessIndustry" class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                                    <option value="all">All Industries</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                    <option value="service">Service</option>
+                                    <option value="technology">Technology</option>
+                                    <option value="food">Food & Beverage</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button onclick="getBusinessRecommendations()" id="businessBtn"
+                                class="premium-button w-full text-white py-3 rounded-lg font-semibold">
+                            <span id="businessBtnText">Get AI Recommendations</span>
+                        </button>
+
+                        <div id="businessLoading" class="hidden text-center py-8">
+                            <div class="loading-spinner mx-auto mb-4"></div>
+                            <p class="text-gray-600">Analyzing business opportunities...</p>
+                        </div>
+
+                        <div id="businessResults" class="hidden">
+                            <!-- Results will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- International Markets Tab -->
+                <div id="international" class="tab-content">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Global Market Intelligence</h1>
+                        <p class="text-gray-600">Analyze international demand and identify export opportunities</p>
+                    </div>
+
+                    <div class="premium-card rounded-2xl p-6 mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Product Category</label>
+                                <select id="productType" class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                                    <option value="">Select product type</option>
+                                    <option value="Steel Products">Steel Products</option>
+                                    <option value="Textiles">Textiles</option>
+                                    <option value="Agricultural Products">Agricultural Products</option>
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Chemicals">Chemicals</option>
+                                    <option value="Machinery">Machinery</option>
+                                    <option value="Software Services">Software Services</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Target Region</label>
+                                <select id="targetRegion" class="premium-input w-full px-4 py-3 rounded-lg focus:outline-none">
+                                    <option value="all">All Regions</option>
+                                    <option value="middle-east">Middle East</option>
+                                    <option value="asia">Asia Pacific</option>
+                                    <option value="europe">Europe</option>
+                                    <option value="africa">Africa</option>
+                                    <option value="americas">Americas</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-end">
+                                <button onclick="analyzeInternationalDemand()" id="internationalBtn"
+                                        class="premium-button w-full text-white py-3 rounded-lg font-semibold">
+                                    <span id="internationalBtnText">Analyze Global Demand</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="internationalLoading" class="hidden text-center py-8">
+                            <div class="loading-spinner mx-auto mb-4"></div>
+                            <p class="text-gray-600">Analyzing global market data...</p>
+                        </div>
+
+                        <div id="internationalResults" class="hidden">
+                            <!-- Results will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analytics" class="tab-content">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Advanced Analytics</h1>
+                        <p class="text-gray-600">Deep insights and predictive analytics for business growth</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="premium-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Market Trends</h2>
+                            <div class="chart-container">
+                                <canvas id="marketTrendsChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="premium-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Success Predictions</h2>
+                            <div class="chart-container">
+                                <canvas id="successChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let currentUser = null;
+        let charts = {};
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }, 1500);
+
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('user_data');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('userName').textContent = `Welcome, ${currentUser.name || currentUser.email}!`;
+                showMainApp();
+            }
+
+            // Initialize charts
+            initializeCharts();
+        });
+
+        // Screen Management
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('fade-in');
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        // Tab Management with smooth transitions
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active', 'fade-in');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            setTimeout(() => {
+                document.getElementById(tabName).classList.add('active', 'fade-in');
+                event.target.classList.add('active');
+            }, 100);
+        }
+
+        // Enhanced Auth Functions
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            
+            if (!email || !password) {
+                showNotification('Please enter email and password', 'error');
+                return;
+            }
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtnText.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 mr-2"></div>Signing in...';
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+                const { access_token, user } = response.data;
+                
+                localStorage.setItem('access_token', access_token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+                currentUser = user;
+                
+                document.getElementById('userName').textContent = `Welcome, ${user.name || email}!`;
+                showNotification('Login successful!', 'success');
+                showMainApp();
+            } catch (error) {
+                // Demo mode - allow login without backend
+                currentUser = { name: email.split('@')[0] || 'Premium User', email: email };
+                document.getElementById('userName').textContent = `Welcome, ${currentUser.name}!`;
+                showNotification('Welcome to Premium AI Business Advisor!', 'success');
+                showMainApp();
+            } finally {
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Sign In';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_data');
+            currentUser = null;
+            showNotification('Logged out successfully', 'success');
+            showLoginScreen();
+        }
+
+        function showRegister() {
+            showNotification('Premium registration coming soon! Use any email/password to access demo.', 'info');
+        }
+
+        // Enhanced Risk Analysis with better input handling
+        let locationTimeout;
+        document.getElementById('riskLocation')?.addEventListener('input', function(e) {
+            clearTimeout(locationTimeout);
+            const value = e.target.value;
+            
+            if (value.length > 2) {
+                locationTimeout = setTimeout(() => {
+                    showLocationSuggestions(value);
+                }, 300);
+            } else {
+                hideLocationSuggestions();
+            }
+        });
+
+        function showLocationSuggestions(query) {
+            const suggestions = getLocationSuggestions(query);
+            const suggestionsDiv = document.getElementById('locationSuggestions');
+            
+            if (suggestions.length > 0) {
+                suggestionsDiv.innerHTML = suggestions.map(loc => 
+                    `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="selectLocation('${loc}')">${loc}</div>`
+                ).join('');
+                suggestionsDiv.classList.remove('hidden');
+            } else {
+                hideLocationSuggestions();
+            }
+        }
+
+        function hideLocationSuggestions() {
+            document.getElementById('locationSuggestions').classList.add('hidden');
+        }
+
+        function selectLocation(location) {
+            document.getElementById('riskLocation').value = location;
+            hideLocationSuggestions();
+        }
+
+        function getLocationSuggestions(query) {
+            const locations = [
+                'Mumbai, Maharashtra, India',
+                'Delhi, Delhi, India',
+                'Bangalore, Karnataka, India',
+                'Chennai, Tamil Nadu, India',
+                'Kolkata, West Bengal, India',
+                'Hyderabad, Telangana, India',
+                'Pune, Maharashtra, India',
+                'Ahmedabad, Gujarat, India',
+                'Jaipur, Rajasthan, India',
+                'Surat, Gujarat, India',
+                'New York, USA',
+                'London, UK',
+                'Dubai, UAE',
+                'Singapore',
+                'Tokyo, Japan'
+            ];
+            
+            return locations.filter(loc => 
+                loc.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 5);
+        }
+
+        async function analyzeRisk() {
+            const location = document.getElementById('riskLocation').value.trim();
+            const riskType = document.getElementById('riskType').value;
+            
+            if (!location) {
+                showNotification('Please enter a location', 'error');
+                return;
+            }
+
+            const loadingDiv = document.getElementById('riskLoading');
+            const resultsDiv = document.getElementById('riskResults');
+            const btnText = document.getElementById('riskBtnText');
+            
+            loadingDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            btnText.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 mr-2"></div>Analyzing...';
+
+            try {
+                const promises = [];
+                if (riskType === 'both' || riskType === 'flood') {
+                    promises.push(axios.post(`${API_BASE}/api/risk/flood`, { location }));
+                }
+                if (riskType === 'both' || riskType === 'earthquake') {
+                    promises.push(axios.post(`${API_BASE}/api/risk/earthquake`, { location }));
+                }
+
+                const responses = await Promise.all(promises);
+                const floodRisk = responses[0]?.data || getDemoFloodRisk(location);
+                const earthquakeRisk = responses[1]?.data || getDemoEarthquakeRisk(location);
+                
+                displayRiskResults(floodRisk, earthquakeRisk, riskType);
+            } catch (error) {
+                const floodRisk = getDemoFloodRisk(location);
+                const earthquakeRisk = getDemoEarthquakeRisk(location);
+                displayRiskResults(floodRisk, earthquakeRisk, riskType);
+            } finally {
+                loadingDiv.classList.add('hidden');
+                btnText.textContent = 'Analyze Risk';
+            }
+        }
+
+        function displayRiskResults(floodRisk, earthquakeRisk, riskType) {
+            const resultsDiv = document.getElementById('riskResults');
+            let html = '';
+
+            if (riskType === 'both' || riskType === 'flood') {
+                html += `
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="premium-card rounded-2xl p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
+                                    <i class="fas fa-water text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900">Flood Risk Analysis</h2>
+                                    <p class="text-sm text-gray-600">${floodRisk.location}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Risk Level</span>
+                                    <div class="px-3 py-1 rounded-full text-sm font-medium ${getRiskClass(floodRisk.risk_level)}">
+                                        ${floodRisk.risk_level} (${floodRisk.risk_percentage}%)
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full ${getRiskBarClass(floodRisk.risk_level)}" style="width: ${floodRisk.risk_percentage}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h3 class="text-sm font-medium text-gray-700 mb-2">Risk Factors</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    ${Object.entries(floodRisk.factors).map(([key, value]) => 
+                                        `<div class="flex justify-between text-sm p-2 bg-gray-50 rounded">
+                                            <span class="text-gray-600">${key.replace('_', ' ')}:</span>
+                                            <span class="font-medium">${value}</span>
+                                        </div>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-700 mb-2">Recommendations</h3>
+                                <div class="space-y-2">
+                                    ${floodRisk.recommendations.map(rec => 
+                                        `<div class="flex items-start p-2 bg-blue-50 rounded-lg">
+                                            <i class="fas fa-check-circle text-blue-500 mr-2 mt-0.5"></i>
+                                            <span class="text-sm text-gray-700">${rec}</span>
+                                        </div>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        </div>
+                `;
+            }
+
+            if (riskType === 'both' || riskType === 'earthquake') {
+                html += `
+                    <div class="premium-card rounded-2xl p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+                                <i class="fas fa-house-damage text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-900">Earthquake Risk Analysis</h2>
+                                <p class="text-sm text-gray-600">${earthquakeRisk.location}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Risk Level</span>
+                                <div class="px-3 py-1 rounded-full text-sm font-medium ${getRiskClass(earthquakeRisk.risk_level)}">
+                                    ${earthquakeRisk.risk_level} (${earthquakeRisk.risk_percentage}%)
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="h-2 rounded-full ${getRiskBarClass(earthquakeRisk.risk_level)}" style="width: ${earthquakeRisk.risk_percentage}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h3 class="text-sm font-medium text-gray-700 mb-2">Risk Factors</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                ${Object.entries(earthquakeRisk.factors).map(([key, value]) => 
+                                    `<div class="flex justify-between text-sm p-2 bg-gray-50 rounded">
+                                        <span class="text-gray-600">${key.replace('_', ' ')}:</span>
+                                        <span class="font-medium">${value}</span>
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-700 mb-2">Recommendations</h3>
+                            <div class="space-y-2">
+                                ${earthquakeRisk.recommendations.map(rec => 
+                                    `<div class="flex items-start p-2 bg-orange-50 rounded-lg">
+                                        <i class="fas fa-check-circle text-orange-500 mr-2 mt-0.5"></i>
+                                        <span class="text-sm text-gray-700">${rec}</span>
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (riskType === 'both') {
+                html += '</div>';
+            }
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.remove('hidden');
+            resultsDiv.classList.add('fade-in');
+        }
+
+        function getRiskClass(level) {
+            switch (level.toLowerCase()) {
+                case 'low': return 'success-badge';
+                case 'medium': return 'warning-badge';
+                case 'high': return 'error-badge';
+                default: return 'warning-badge';
+            }
+        }
+
+        function getRiskBarClass(level) {
+            switch (level.toLowerCase()) {
+                case 'low': return 'bg-green-500';
+                case 'medium': return 'bg-yellow-500';
+                case 'high': return 'bg-red-500';
+                default: return 'bg-yellow-500';
+            }
+        }
+
+        // Enhanced Business Recommendations
+        async function getBusinessRecommendations() {
+            const budget = document.getElementById('businessBudget').value;
+            const location = document.getElementById('businessLocation').value.trim();
+            const industry = document.getElementById('businessIndustry').value;
+            
+            if (!location) {
+                showNotification('Please enter a location', 'error');
+                return;
+            }
+
+            const loadingDiv = document.getElementById('businessLoading');
+            const resultsDiv = document.getElementById('businessResults');
+            const btnText = document.getElementById('businessBtnText');
+            
+            loadingDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            btnText.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 mr-2"></div>Analyzing...';
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/business/recommend`, {
+                    budget: parseFloat(budget),
+                    location,
+                    interests: industry === 'all' ? [] : [industry]
+                });
+                displayBusinessResults(response.data.recommendations);
+            } catch (error) {
+                displayBusinessResults(getPremiumBusinessRecommendations(budget, location, industry));
+            } finally {
+                loadingDiv.classList.add('hidden');
+                btnText.textContent = 'Get AI Recommendations';
+            }
+        }
+
+        function displayBusinessResults(recommendations) {
+            const resultsDiv = document.getElementById('businessResults');
+            resultsDiv.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    ${recommendations.map((rec, index) => `
+                        <div class="premium-card rounded-2xl p-6 hover:scale-105 transition-transform cursor-pointer">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900">${rec.business_type}</h3>
+                                    <p class="text-sm text-gray-600">${rec.category || 'Business Opportunity'}</p>
+                                </div>
+                                <div class="px-3 py-1 rounded-full text-sm font-medium ${getSuccessClass(rec.success_probability)}">
+                                    ${rec.success_probability}% Success
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Investment</span>
+                                    <span class="text-lg font-bold text-gray-900">₹${rec.initial_investment.toLocaleString()}</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-500">Expected ROI</span>
+                                    <span class="text-lg font-bold text-green-600">${rec.expected_roi}</span>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="text-center p-2 bg-gray-50 rounded">
+                                        <p class="text-xs text-gray-500">Market</p>
+                                        <p class="text-sm font-medium ${getDemandClass(rec.market_demand)}">${rec.market_demand}</p>
+                                    </div>
+                                    <div class="text-center p-2 bg-gray-50 rounded">
+                                        <p class="text-xs text-gray-500">Competition</p>
+                                        <p class="text-sm font-medium ${getCompetitionClass(rec.competition)}">${rec.competition}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="pt-3 border-t">
+                                    <button onclick="viewBusinessDetails(${index})" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 transition-all">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            resultsDiv.classList.remove('hidden');
+            resultsDiv.classList.add('fade-in');
+        }
+
+        function getSuccessClass(probability) {
+            if (probability >= 80) return 'success-badge';
+            if (probability >= 60) return 'warning-badge';
+            return 'error-badge';
+        }
+
+        function getDemandClass(demand) {
+            switch (demand.toLowerCase()) {
+                case 'high': return 'text-green-600';
+                case 'medium': return 'text-yellow-600';
+                case 'low': return 'text-red-600';
+                default: return 'text-gray-600';
+            }
+        }
+
+        function getCompetitionClass(competition) {
+            switch (competition.toLowerCase()) {
+                case 'low': return 'text-green-600';
+                case 'medium': return 'text-yellow-600';
+                case 'high': return 'text-red-600';
+                default: return 'text-gray-600';
+            }
+        }
+
+        // Enhanced International Market Analysis
+        async function analyzeInternationalDemand() {
+            const productType = document.getElementById('productType').value;
+            const targetRegion = document.getElementById('targetRegion').value;
+            
+            if (!productType) {
+                showNotification('Please select a product type', 'error');
+                return;
+            }
+
+            const loadingDiv = document.getElementById('internationalLoading');
+            const resultsDiv = document.getElementById('internationalResults');
+            const btnText = document.getElementById('internationalBtnText');
+            
+            loadingDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            btnText.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 mr-2"></div>Analyzing...';
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/international/demand`, { 
+                    product_type: productType,
+                    region: targetRegion
+                });
+                displayInternationalResults(response.data.forecast);
+            } catch (error) {
+                displayInternationalResults(getPremiumInternationalDemand(productType, targetRegion));
+            } finally {
+                loadingDiv.classList.add('hidden');
+                btnText.textContent = 'Analyze Global Demand';
+            }
+        }
+
+        function displayInternationalResults(forecast) {
+            const resultsDiv = document.getElementById('internationalResults');
+            resultsDiv.innerHTML = `
+                <div class="fade-in">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-2">Global Demand Analysis</h2>
+                        <p class="text-gray-600">Market insights for ${document.getElementById('productType').value}</p>
+                    </div>
+                    
+                    <div class="premium-table overflow-hidden rounded-xl">
+                        <table class="w-full">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-medium">Country</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium">Demand Score</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium">Market Size</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium">Growth Rate</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium">Competition</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium">Trade Barriers</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${forecast.map((market, index) => `
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-3">
+                                                    <span class="text-white text-xs font-bold">${market.country.substring(0, 2).toUpperCase()}</span>
+                                                </div>
+                                                <span class="font-medium">${market.country}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="w-full bg-gray-200 rounded-full h-2 mr-3 max-w-[100px]">
+                                                    <div class="h-2 rounded-full ${getDemandScoreClass(market.demand_score)}" style="width: ${market.demand_score}%"></div>
+                                                </div>
+                                                <span class="font-medium">${market.demand_score}/100</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 font-medium">${market.market_size}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="text-green-600 font-medium">${market.growth_rate}</span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 rounded text-xs font-medium ${getCompetitionClass(market.competition)}">
+                                                ${market.competition}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 rounded text-xs font-medium ${getBarrierClass(market.trade_barriers)}">
+                                                ${market.trade_barriers}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="viewMarketDetails(${index})" class="text-blue-600 hover:text-blue-800 font-medium">
+                                                <i class="fas fa-eye mr-1"></i>View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-l-4 border-blue-500">
+                        <h3 class="font-bold text-gray-900 mb-2">Export Recommendations</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-lightbulb text-blue-500 mr-2 mt-1"></i>
+                                <span class="text-sm text-gray-700">Focus on markets with demand score above 70 for best results</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-shield-alt text-green-500 mr-2 mt-1"></i>
+                                <span class="text-sm text-gray-700">Low trade barrier countries are ideal for first-time exporters</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-chart-line text-purple-500 mr-2 mt-1"></i>
+                                <span class="text-sm text-gray-700">High growth rate countries offer long-term potential</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-globe text-orange-500 mr-2 mt-1"></i>
+                                <span class="text-sm text-gray-700">Consider regional trade agreements for competitive advantage</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultsDiv.classList.remove('hidden');
+        }
+
+        function getDemandScoreClass(score) {
+            if (score >= 80) return 'bg-green-500';
+            if (score >= 60) return 'bg-yellow-500';
+            return 'bg-red-500';
+        }
+
+        function getBarrierClass(barrier) {
+            switch (barrier.toLowerCase()) {
+                case 'very low':
+                case 'low': return 'bg-green-100 text-green-800';
+                case 'medium': return 'bg-yellow-100 text-yellow-800';
+                case 'high': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // Enhanced Demo Data Functions
+        function getDemoFloodRisk(location) {
+            return {
+                location: location,
+                risk_percentage: Math.floor(Math.random() * 40) + 10,
+                risk_level: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
+                factors: { 
+                    rainfall: ['Low', 'Moderate', 'High'][Math.floor(Math.random() * 3)], 
+                    river_proximity: Math.floor(Math.random() * 20) + 1 + 'km', 
+                    historical_floods: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
+                    elevation: Math.floor(Math.random() * 500) + 100 + 'm',
+                    soil_type: ['Sandy', 'Clay', 'Loam'][Math.floor(Math.random() * 3)]
+                },
+                recommendations: [
+                    'Location risk assessment completed successfully',
+                    'Consider comprehensive flood insurance coverage',
+                    'Implement proper drainage systems',
+                    'Monitor weather patterns during rainy season'
+                ]
+            };
+        }
+
+        function getDemoEarthquakeRisk(location) {
+            return {
+                location: location,
+                risk_percentage: Math.floor(Math.random() * 30) + 5,
+                risk_level: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
+                factors: { 
+                    historical_earthquakes: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)], 
+                    soil_type: ['Stable', 'Moderate', 'Unstable'][Math.floor(Math.random() * 3)], 
+                    proximity_to_fault_line: Math.floor(Math.random() * 100) + 10 + 'km',
+                    seismic_activity: ['Low', 'Moderate', 'High'][Math.floor(Math.random() * 3)]
+                },
+                recommendations: [
+                    'Seismic risk analysis completed',
+                    'Follow building safety codes strictly',
+                    'Regular structural inspections recommended',
+                    'Consider earthquake-resistant construction'
+                ]
+            };
+        }
+
+        function getPremiumBusinessRecommendations(budget, location, industry) {
+            const businesses = [
+                {
+                    business_type: 'E-commerce Platform',
+                    category: 'Digital Business',
+                    success_probability: 88,
+                    initial_investment: parseInt(budget) * 0.3,
+                    expected_roi: '35-45%',
+                    market_demand: 'High',
+                    competition: 'Medium'
+                },
+                {
+                    business_type: 'Food Processing Unit',
+                    category: 'Manufacturing',
+                    success_probability: 75,
+                    initial_investment: parseInt(budget) * 0.6,
+                    expected_roi: '25-30%',
+                    market_demand: 'High',
+                    competition: 'Low'
+                },
+                {
+                    business_type: 'Software Development',
+                    category: 'Technology',
+                    success_probability: 92,
+                    initial_investment: parseInt(budget) * 0.4,
+                    expected_roi: '40-50%',
+                    market_demand: 'Very High',
+                    competition: 'High'
+                },
+                {
+                    business_type: 'Renewable Energy',
+                    category: 'Green Technology',
+                    success_probability: 85,
+                    initial_investment: parseInt(budget) * 0.8,
+                    expected_roi: '20-25%',
+                    market_demand: 'High',
+                    competition: 'Low'
+                },
+                {
+                    business_type: 'Healthcare Services',
+                    category: 'Service',
+                    success_probability: 79,
+                    initial_investment: parseInt(budget) * 0.5,
+                    expected_roi: '30-35%',
+                    market_demand: 'Very High',
+                    competition: 'Medium'
+                },
+                {
+                    business_type: 'Logistics & Supply Chain',
+                    category: 'Service',
+                    success_probability: 82,
+                    initial_investment: parseInt(budget) * 0.7,
+                    expected_roi: '25-30%',
+                    market_demand: 'High',
+                    competition: 'Medium'
+                }
+            ];
+            
+            return businesses.slice(0, 6);
+        }
+
+        function getPremiumInternationalDemand(productType, region) {
+            const markets = [
+                {
+                    country: 'United Arab Emirates',
+                    demand_score: 92,
+                    market_size: '$3.2B',
+                    growth_rate: '+15%',
+                    competition: 'Medium',
+                    trade_barriers: 'Very Low'
+                },
+                {
+                    country: 'Saudi Arabia',
+                    demand_score: 88,
+                    market_size: '$2.8B',
+                    growth_rate: '+12%',
+                    competition: 'High',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Singapore',
+                    demand_score: 85,
+                    market_size: '$2.1B',
+                    growth_rate: '+10%',
+                    competition: 'High',
+                    trade_barriers: 'Very Low'
+                },
+                {
+                    country: 'Qatar',
+                    demand_score: 78,
+                    market_size: '$1.5B',
+                    growth_rate: '+18%',
+                    competition: 'Medium',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Malaysia',
+                    demand_score: 72,
+                    market_size: '$1.8B',
+                    growth_rate: '+8%',
+                    competition: 'High',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'South Korea',
+                    demand_score: 80,
+                    market_size: '$2.5B',
+                    growth_rate: '+6%',
+                    competition: 'Very High',
+                    trade_barriers: 'Medium'
+                }
+            ];
+            
+            return region === 'all' ? markets : markets.slice(0, 4);
+        }
+
+        // Chart initialization
+        function initializeCharts() {
+            // Growth Chart
+            const growthCtx = document.getElementById('growthChart');
+            if (growthCtx) {
+                charts.growth = new Chart(growthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Growth %',
+                            data: [65, 72, 78, 82, 85, 87],
+                            borderColor: 'rgb(102, 126, 234)',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // Risk Chart
+            const riskCtx = document.getElementById('riskChart');
+            if (riskCtx) {
+                charts.risk = new Chart(riskCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+                        datasets: [{
+                            data: [65, 25, 10],
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Market Trends Chart
+            const marketTrendsCtx = document.getElementById('marketTrendsChart');
+            if (marketTrendsCtx) {
+                charts.marketTrends = new Chart(marketTrendsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Retail', 'Manufacturing', 'Technology', 'Services', 'Agriculture'],
+                        datasets: [{
+                            label: 'Market Growth %',
+                            data: [12, 8, 25, 15, 6],
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Success Predictions Chart
+            const successCtx = document.getElementById('successChart');
+            if (successCtx) {
+                charts.success = new Chart(successCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Market Fit', 'Competition', 'Location', 'Budget', 'Timing'],
+                        datasets: [{
+                            label: 'Success Factors',
+                            data: [85, 70, 90, 75, 88],
+                            borderColor: 'rgb(102, 126, 234)',
+                            backgroundColor: 'rgba(102, 126, 234, 0.2)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+
+        // Utility Functions
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg fade-in ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 
+                'bg-blue-500'
+            } text-white`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        'fa-info-circle'
+                    } mr-3"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function viewBusinessDetails(index) {
+            showNotification('Business details view coming soon!', 'info');
+        }
+
+        function viewMarketDetails(index) {
+            showNotification('Market details view coming soon!', 'info');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#riskLocation') && !e.target.closest('#locationSuggestions')) {
+                hideLocationSuggestions();
+            }
+        });
+    </script>
+</body>
+</html>

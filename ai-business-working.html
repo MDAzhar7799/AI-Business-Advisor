@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Business Growth Advisor - Working Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { transition: all 0.3s; }
+        .tab-button.active { background-color: rgb(59 130 246); color: white; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+            <div class="max-w-md w-full space-y-8 p-8">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">AI Business Advisor</h1>
+                    <p class="text-gray-600">Smart business intelligence system</p>
+                </div>
+                
+                <div class="bg-white shadow rounded-lg p-6 space-y-4">
+                    <input type="email" id="loginEmail" placeholder="Email" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="loginPassword" placeholder="Password" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="login()" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-medium">
+                        Sign In
+                    </button>
+                    <button onclick="showRegister()" 
+                            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-md font-medium">
+                        Create Account
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (hidden initially) -->
+        <div id="mainApp" class="hidden min-h-screen">
+            <!-- Navigation -->
+            <nav class="bg-white shadow-sm border-b">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="flex justify-between h-16 items-center">
+                        <div class="flex space-x-8">
+                            <button onclick="showTab('dashboard')" class="tab-button active px-3 py-2 text-sm font-medium rounded">Dashboard</button>
+                            <button onclick="showTab('risk')" class="tab-button px-3 py-2 text-sm font-medium rounded">Risk Analysis</button>
+                            <button onclick="showTab('business')" class="tab-button px-3 py-2 text-sm font-medium rounded">Business Ideas</button>
+                            <button onclick="showTab('international')" class="tab-button px-3 py-2 text-sm font-medium rounded">International Markets</button>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span id="userName" class="text-gray-700">Welcome!</span>
+                            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active p-8">
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-8">Business Dashboard</h1>
+                    
+                    <!-- Metrics Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-100 rounded-full">
+                                    <i class="fas fa-chart-line text-blue-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                                    <p class="text-2xl font-bold text-gray-900">$124,563</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-green-100 rounded-full">
+                                    <i class="fas fa-users text-green-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Active Projects</p>
+                                    <p class="text-2xl font-bold text-gray-900">47</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-yellow-100 rounded-full">
+                                    <i class="fas fa-trending-up text-yellow-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Growth Rate</p>
+                                    <p class="text-2xl font-bold text-gray-900">+23%</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-purple-100 rounded-full">
+                                    <i class="fas fa-award text-purple-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Success Rate</p>
+                                    <p class="text-2xl font-bold text-gray-900">89%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center p-3 bg-gray-50 rounded">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">New project completed</p>
+                                    <p class="text-xs text-gray-500">E-commerce platform launched successfully</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 bg-gray-50 rounded">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Market analysis updated</p>
+                                    <p class="text-xs text-gray-500">International demand forecast refreshed</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 bg-gray-50 rounded">
+                                <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Risk assessment completed</p>
+                                    <p class="text-xs text-gray-500">Flood risk analysis for new location</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Analysis Tab -->
+            <div id="risk" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-8">Risk Analysis</h1>
+                    
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Location Risk Assessment</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                                <input type="text" id="riskLocation" placeholder="Enter city or region" 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Analysis Type</label>
+                                <select id="riskType" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="flood">Flood Risk</option>
+                                    <option value="earthquake">Earthquake Risk</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="analyzeRisk()" 
+                                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium">
+                            Analyze Risk
+                        </button>
+                    </div>
+
+                    <div id="riskResults" class="hidden bg-white rounded-lg shadow p-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Risk Assessment Results</h2>
+                        <div id="riskContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Ideas Tab -->
+            <div id="business" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-8">Business Recommendations</h1>
+                    
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Get Business Ideas</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range</label>
+                                <select id="budget" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="low">Low ($0 - $50K)</option>
+                                    <option value="medium">Medium ($50K - $200K)</option>
+                                    <option value="high">High ($200K+)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Interest Area</label>
+                                <select id="interest" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="technology">Technology</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="service">Service</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="getBusinessIdeas()" 
+                                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium">
+                            Get Recommendations
+                        </button>
+                    </div>
+
+                    <div id="businessResults" class="hidden bg-white rounded-lg shadow p-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Recommended Business Ideas</h2>
+                        <div id="businessContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- International Markets Tab -->
+            <div id="international" class="tab-content p-8">
+                <div class="max-w-4xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-8">International Market Analysis</h1>
+                    
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Market Demand Analysis</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Product Type</label>
+                                <select id="productType" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="electronics">Electronics</option>
+                                    <option value="clothing">Clothing</option>
+                                    <option value="food">Food Products</option>
+                                    <option value="software">Software</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Target Region</label>
+                                <select id="targetRegion" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="asia">Asia</option>
+                                    <option value="europe">Europe</option>
+                                    <option value="americas">Americas</option>
+                                    <option value="africa">Africa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="analyzeInternationalDemand()" 
+                                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium">
+                            Analyze Markets
+                        </button>
+                    </div>
+
+                    <div id="internationalResults" class="hidden bg-white rounded-lg shadow p-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Market Analysis Results</h2>
+                        <div id="internationalContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let currentUser = null;
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Auth Functions
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+                const { access_token, user } = response.data;
+                
+                localStorage.setItem('access_token', access_token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+                currentUser = user;
+                
+                document.getElementById('userName').textContent = `Welcome, ${user.name || email}!`;
+                showMainApp();
+            } catch (error) {
+                // Demo mode
+                currentUser = { name: email.split('@')[0] || 'User', email: email };
+                document.getElementById('userName').textContent = `Welcome, ${currentUser.name}!`;
+                showMainApp();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_data');
+            currentUser = null;
+            showLoginScreen();
+        }
+
+        function showRegister() {
+            alert('Registration feature coming soon!');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        // Risk Analysis Functions
+        async function analyzeRisk() {
+            const location = document.getElementById('riskLocation').value;
+            const riskType = document.getElementById('riskType').value;
+            
+            if (!location) {
+                alert('Please enter a location');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/risk/analyze`, { location, risk_type: riskType });
+                displayRiskResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayRiskResults(getDemoRiskData());
+            }
+        }
+
+        function displayRiskResults(data) {
+            const resultsDiv = document.getElementById('riskResults');
+            const contentDiv = document.getElementById('riskContent');
+            
+            contentDiv.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-medium text-gray-900 mb-2">Risk Level</h3>
+                        <div class="text-3xl font-bold ${data.risk_level === 'Low' ? 'text-green-600' : data.risk_level === 'Medium' ? 'text-yellow-600' : 'text-red-600'}">
+                            ${data.risk_level}
+                        </div>
+                        <div class="text-lg text-gray-600 mt-2">${data.risk_percentage}%</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-medium text-gray-900 mb-2">Key Factors</h3>
+                        <ul class="space-y-2">
+                            ${Object.entries(data.factors).map(([key, value]) => 
+                                `<li class="text-sm text-gray-600">
+                                    <span class="font-medium">${key.replace(/_/g, ' ')}:</span> ${value}
+                                </li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h3 class="font-medium text-gray-900 mb-2">Recommendations</h3>
+                    <ul class="space-y-2">
+                        ${data.recommendations.map(rec => 
+                            `<li class="text-sm text-gray-600 flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                                ${rec}
+                            </li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Business Ideas Functions
+        async function getBusinessIdeas() {
+            const budget = document.getElementById('budget').value;
+            const interest = document.getElementById('interest').value;
+            
+            try {
+                const response = await axios.post(`${API_BASE}/api/business/recommend`, { budget, interest });
+                displayBusinessResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayBusinessResults(getDemoBusinessIdeas());
+            }
+        }
+
+        function displayBusinessResults(recommendations) {
+            const resultsDiv = document.getElementById('businessResults');
+            const contentDiv = document.getElementById('businessContent');
+            
+            contentDiv.innerHTML = recommendations.map(rec => `
+                <div class="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow mb-4">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">${rec.business_type}</h3>
+                        <div class="px-2 py-1 rounded-full text-xs font-medium text-green-600 bg-green-50">
+                            ${rec.success_probability}% Success
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm text-gray-500">Initial Investment</p>
+                            <p class="text-lg font-semibold text-gray-900">$${rec.initial_investment.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Expected ROI</p>
+                            <p class="text-lg font-semibold text-green-600">${rec.expected_roi}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // International Markets Functions
+        async function analyzeInternationalDemand() {
+            const productType = document.getElementById('productType').value;
+            const targetRegion = document.getElementById('targetRegion').value;
+            
+            if (!productType) {
+                alert('Please select a product type');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/international/demand`, { 
+                    product_type: productType, 
+                    target_region: targetRegion 
+                });
+                displayInternationalResults(response.data);
+            } catch (error) {
+                // Demo data
+                displayInternationalResults(getDemoInternationalData());
+            }
+        }
+
+        function displayInternationalResults(forecast) {
+            const resultsDiv = document.getElementById('internationalResults');
+            const contentDiv = document.getElementById('internationalContent');
+            
+            contentDiv.innerHTML = `
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Demand Forecast for ${document.getElementById('productType').value}</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Country</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Demand Score</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Market Size</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Growth Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${forecast.map(market => `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${market.country}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="inline-block px-2 py-1 rounded-full text-xs font-medium text-green-600 bg-green-50">
+                                            ${market.demand_score}/100
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${market.market_size}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${market.growth_rate}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Demo Data Functions
+        function getDemoRiskData() {
+            return {
+                location: 'Demo Location',
+                risk_percentage: 25,
+                risk_level: 'Low',
+                factors: { 
+                    rainfall: 'moderate', 
+                    river_proximity: '5km', 
+                    historical_floods: 'low' 
+                },
+                recommendations: [
+                    'Location is relatively safe for business',
+                    'Consider flood insurance for protection',
+                    'Monitor weather patterns during monsoon season'
+                ]
+            };
+        }
+
+        function getDemoBusinessIdeas() {
+            return [
+                {
+                    business_type: 'E-commerce Store',
+                    success_probability: 75,
+                    initial_investment: 1500000,
+                    expected_roi: '25-30%',
+                    market_demand: 'High',
+                    competition: 'Medium'
+                },
+                {
+                    business_type: 'Food Delivery Service',
+                    success_probability: 68,
+                    initial_investment: 2000000,
+                    expected_roi: '20-25%',
+                    market_demand: 'High',
+                    competition: 'High'
+                },
+                {
+                    business_type: 'Software Development',
+                    success_probability: 82,
+                    initial_investment: 3000000,
+                    expected_roi: '30-35%',
+                    market_demand: 'Medium',
+                    competition: 'Low'
+                }
+            ];
+        }
+
+        function getDemoInternationalData() {
+            return [
+                {
+                    country: 'UAE',
+                    demand_score: 85,
+                    market_size: '$2.5B',
+                    growth_rate: '+12%',
+                    competition: 'Medium',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Saudi Arabia',
+                    demand_score: 78,
+                    market_size: '$1.8B',
+                    growth_rate: '+10%',
+                    competition: 'High',
+                    trade_barriers: 'Low'
+                },
+                {
+                    country: 'Singapore',
+                    demand_score: 72,
+                    market_size: '$1.2B',
+                    growth_rate: '+8%',
+                    competition: 'High',
+                    trade_barriers: 'Very Low'
+                }
+            ];
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('user_data');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('userName').textContent = `Welcome, ${currentUser.name || currentUser.email}!`;
+                showMainApp();
+            }
+        });
+    </script>
+</body>
+</html>

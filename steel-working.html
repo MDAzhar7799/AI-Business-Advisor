@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel Production AI - Working Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+        }
+        
+        .login-section { 
+            display: block; 
+        }
+        .login-section.hidden { 
+            display: none; 
+        }
+        
+        .dashboard-section { 
+            display: none; 
+        }
+        .dashboard-section.active { 
+            display: block; 
+        }
+        
+        .steel-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .steel-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .steel-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        
+        .steel-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .steel-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .steel-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+        
+        .steel-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .steel-metric {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.05) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .steel-metric::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8, #10b981);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .steel-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #64748b 0%, #374151 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d1d5db;
+        }
+        
+        .steel-icon i {
+            font-size: 18px;
+        }
+        
+        .nav-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-button.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Section -->
+        <div id="loginSection" class="login-section min-h-screen flex items-center justify-center">
+            <div class="w-full max-w-md px-4">
+                <!-- Steel Production Logo -->
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 mx-auto mb-6">
+                        <div class="steel-icon">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                    </div>
+                    <h1 class="text-4xl font-bold text-white mb-2">Steel Production AI</h1>
+                    <p class="text-gray-400 text-lg">Intelligent Manufacturing Platform</p>
+                    <div class="mt-2 flex justify-center space-x-2">
+                        <span class="px-3 py-1 bg-blue-600 text-white text-xs rounded-full">Industry 4.0</span>
+                        <span class="px-3 py-1 bg-green-600 text-white text-xs rounded-full">AI Powered</span>
+                        <span class="px-3 py-1 bg-orange-600 text-white text-xs rounded-full">Steel Focus</span>
+                    </div>
+                </div>
+                
+                <!-- Login Form -->
+                <div class="steel-card rounded-2xl p-8">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Plant Email</label>
+                            <div class="relative">
+                                <input type="email" id="loginEmail" placeholder="manager@steelplant.com" 
+                                       class="steel-input w-full px-4 py-3 rounded-lg">
+                                <i class="fas fa-hard-hat absolute right-3 top-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Access Code</label>
+                            <div class="relative">
+                                <input type="password" id="loginPassword" placeholder="Enter plant access code" 
+                                       class="steel-input w-full px-4 py-3 rounded-lg pr-12">
+                                <button onclick="togglePassword()" class="absolute right-3 top-4 text-gray-400 hover:text-white">
+                                    <i class="fas fa-eye" id="passwordToggle"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center text-sm text-gray-400">
+                                <input type="checkbox" class="mr-2 rounded">
+                                <span>Remember plant</span>
+                            </label>
+                            <a href="#" class="text-sm text-blue-400 hover:text-blue-300">Reset access</a>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <button onclick="login()" id="loginBtn"
+                                    class="steel-button w-full py-3 rounded-lg font-semibold text-white">
+                                <span id="loginBtnText">Access Steel Production Dashboard</span>
+                            </button>
+                            
+                            <div class="text-center">
+                                <p class="text-xs text-gray-500 mt-4">Demo: Use any email/code to access</p>
+                                <p class="text-xs text-gray-500">Steel Production Management System v2.0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="dashboard-section">
+            <!-- Steel Production Navigation -->
+            <nav class="steel-card sticky top-0 z-40 mb-6">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="flex justify-between h-16 items-center">
+                        <div class="flex items-center space-x-8">
+                            <div class="flex items-center">
+                                <div class="steel-icon mr-3">
+                                    <i class="fas fa-industry"></i>
+                                </div>
+                                <span class="font-bold text-xl text-white">Steel Production AI</span>
+                                <span class="ml-2 px-2 py-1 bg-green-600 text-white text-xs rounded-full">LIVE</span>
+                            </div>
+                            
+                            <div class="hidden md:flex space-x-2">
+                                <button onclick="showSection('overview')" class="nav-button active px-4 py-2 text-sm font-medium rounded-lg">
+                                    <i class="fas fa-tachometer-alt mr-2"></i>Overview
+                                </button>
+                                <button onclick="showSection('production')" class="nav-button px-4 py-2 text-sm font-medium rounded-lg">
+                                    <i class="fas fa-industry mr-2"></i>Production
+                                </button>
+                                <button onclick="showSection('quality')" class="nav-button px-4 py-2 text-sm font-medium rounded-lg">
+                                    <i class="fas fa-award mr-2"></i>Quality
+                                </button>
+                                <button onclick="showSection('market')" class="nav-button px-4 py-2 text-sm font-medium rounded-lg">
+                                    <i class="fas fa-globe mr-2"></i>Market
+                                </button>
+                                <button onclick="showSection('analytics')" class="nav-button px-4 py-2 text-sm font-medium rounded-lg">
+                                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="hidden md:block">
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-400">Plant Manager</p>
+                                    <p id="userName" class="text-sm font-medium text-white">Steel Plant User</p>
+                                </div>
+                            </div>
+                            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="max-w-7xl mx-auto px-4">
+                <!-- Overview Section -->
+                <div id="overview" class="dashboard-section-content active">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">Steel Production Overview</h1>
+                        <p class="text-gray-400">Real-time manufacturing intelligence and analytics</p>
+                    </div>
+
+                    <!-- Steel Production Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="steel-metric rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Daily Production</p>
+                                    <p class="text-3xl font-bold text-white">1,247<span class="text-lg text-gray-400"> tons</span></p>
+                                    <p class="text-sm text-green-400 mt-1">
+                                        <i class="fas fa-arrow-up mr-1"></i>+8.3% vs yesterday
+                                    </p>
+                                </div>
+                                <div class="steel-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="steel-metric rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Quality Rate</p>
+                                    <p class="text-3xl font-bold text-white">98.7<span class="text-lg text-gray-400">%</span></p>
+                                    <p class="text-sm text-green-400 mt-1">
+                                        <i class="fas fa-award mr-1"></i>Excellent
+                                    </p>
+                                </div>
+                                <div class="steel-icon">
+                                    <i class="fas fa-award"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="steel-metric rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Efficiency</p>
+                                    <p class="text-3xl font-bold text-white">96.2<span class="text-lg text-gray-400">%</span></p>
+                                    <p class="text-sm text-yellow-400 mt-1">
+                                        <i class="fas fa-cogs mr-1"></i>Optimized
+                                    </p>
+                                </div>
+                                <div class="steel-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="steel-metric rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Active Orders</p>
+                                    <p class="text-3xl font-bold text-white">52</p>
+                                    <p class="text-sm text-blue-400 mt-1">
+                                        <i class="fas fa-clipboard-list mr-1"></i>+6 new today
+                                    </p>
+                                </div>
+                                <div class="steel-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Production Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="steel-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4">Production Trend</h2>
+                            <div class="chart-container">
+                                <canvas id="productionChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="steel-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4">Quality Distribution</h2>
+                            <div class="chart-container">
+                                <canvas id="qualityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="steel-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4">Production Control</h2>
+                            <div class="space-y-3">
+                                <button class="w-full text-left p-3 bg-blue-600 bg-opacity-20 hover:bg-opacity-30 text-blue-300 rounded-lg transition-all">
+                                    <i class="fas fa-play mr-3"></i>
+                                    <span class="text-white">Start Production Line A</span>
+                                </button>
+                                <button class="w-full text-left p-3 bg-yellow-600 bg-opacity-20 hover:bg-opacity-30 text-yellow-300 rounded-lg transition-all">
+                                    <i class="fas fa-pause mr-3"></i>
+                                    <span class="text-white">Maintenance Mode</span>
+                                </button>
+                                <button class="w-full text-left p-3 bg-red-600 bg-opacity-20 hover:bg-opacity-30 text-red-300 rounded-lg transition-all">
+                                    <i class="fas fa-stop mr-3"></i>
+                                    <span class="text-white">Emergency Stop</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="steel-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4">Recent Production</h2>
+                            <div class="space-y-3">
+                                <div class="flex items-center p-3 bg-gray-800 bg-opacity-50 rounded-lg">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-white font-medium">Line A - High Grade Steel</p>
+                                        <p class="text-xs text-gray-400">245 tons completed</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-800 bg-opacity-50 rounded-lg">
+                                    <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-white font-medium">Line B - Medium Grade Steel</p>
+                                        <p class="text-xs text-gray-400">189 tons completed</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-800 bg-opacity-50 rounded-lg">
+                                    <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-white font-medium">Line C - Special Alloy</p>
+                                        <p class="text-xs text-gray-400">156 tons completed</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="steel-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold text-white mb-4">AI Insights</h2>
+                            <div class="space-y-3">
+                                <div class="p-3 bg-blue-600 bg-opacity-20 rounded-lg border-l-4 border-blue-500">
+                                    <p class="font-medium text-white mb-1">Production Optimization</p>
+                                    <p class="text-sm text-gray-300">AI suggests 15% efficiency increase by adjusting furnace settings</p>
+                                </div>
+                                <div class="p-3 bg-green-600 bg-opacity-20 rounded-lg border-l-4 border-green-500">
+                                    <p class="font-medium text-white mb-1">Quality Alert</p>
+                                    <p class="text-sm text-gray-300">Carbon content optimal - maintain current composition</p>
+                                </div>
+                                <div class="p-3 bg-orange-600 bg-opacity-20 rounded-lg border-l-4 border-orange-500">
+                                    <p class="font-medium text-white mb-1">Maintenance Prediction</p>
+                                    <p class="text-sm text-gray-300">Rolling mill requires service in 72 hours</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other sections -->
+                <div id="production" class="dashboard-section-content">
+                    <div class="steel-card rounded-2xl p-8">
+                        <h2 class="text-2xl font-bold text-white mb-6">Production Management</h2>
+                        <p class="text-gray-300 text-center py-12">Production control module - Coming soon with detailed line management...</p>
+                    </div>
+                </div>
+
+                <div id="quality" class="dashboard-section-content">
+                    <div class="steel-card rounded-2xl p-8">
+                        <h2 class="text-2xl font-bold text-white mb-6">Quality Control</h2>
+                        <p class="text-gray-300 text-center py-12">Quality management module - Coming soon with detailed quality analytics...</p>
+                    </div>
+                </div>
+
+                <div id="market" class="dashboard-section-content">
+                    <div class="steel-card rounded-2xl p-8">
+                        <h2 class="text-2xl font-bold text-white mb-6">Market Intelligence</h2>
+                        <p class="text-gray-300 text-center py-12">Market analysis module - Coming soon with steel market insights...</p>
+                    </div>
+                </div>
+
+                <div id="analytics" class="dashboard-section-content">
+                    <div class="steel-card rounded-2xl p-8">
+                        <h2 class="text-2xl font-bold text-white mb-6">Advanced Analytics</h2>
+                        <p class="text-gray-300 text-center py-12">Analytics module - Coming soon with detailed production analytics...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let currentUser = null;
+        let charts = {};
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Steel Production AI loaded');
+            
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('user_data');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('userName').textContent = currentUser.name || currentUser.email;
+                showDashboard();
+            }
+
+            // Initialize charts
+            initializeCharts();
+        });
+
+        // Section Management
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('active');
+            document.getElementById('dashboardSection').classList.add('fade-in');
+        }
+
+        function showLogin() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.remove('active');
+        }
+
+        function showSection(sectionName) {
+            document.querySelectorAll('.dashboard-section-content').forEach(section => {
+                section.classList.remove('active', 'fade-in');
+            });
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            
+            setTimeout(() => {
+                document.getElementById(sectionName).classList.add('active', 'fade-in');
+                event.target.classList.add('active');
+            }, 100);
+        }
+
+        // Enhanced Auth Functions
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            
+            if (!email || !password) {
+                alert('Please enter email and access code');
+                return;
+            }
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtnText.innerHTML = '<div class="loading-spinner inline-block w-4 h-4 mr-2"></div>Authenticating...';
+
+            try {
+                const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+                const { access_token, user } = response.data;
+                
+                localStorage.setItem('access_token', access_token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+                currentUser = user;
+                
+                document.getElementById('userName').textContent = user.name || email;
+                alert('Authentication successful!');
+                showDashboard();
+            } catch (error) {
+                // Demo mode
+                currentUser = { name: email.split('@')[0] || 'Steel Manager', email: email };
+                document.getElementById('userName').textContent = currentUser.name;
+                alert('Welcome to Steel Production AI!');
+                showDashboard();
+            } finally {
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Access Steel Production Dashboard';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_data');
+            currentUser = null;
+            alert('Logged out successfully');
+            showLogin();
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('loginPassword');
+            const toggleIcon = document.getElementById('passwordToggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Chart initialization
+        function initializeCharts() {
+            // Production Chart
+            const productionCtx = document.getElementById('productionChart');
+            if (productionCtx) {
+                charts.production = new Chart(productionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM'],
+                        datasets: [{
+                            label: 'Steel Production (tons)',
+                            data: [180, 220, 195, 245, 289, 267],
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                display: true,
+                                labels: { color: 'white' }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: 'white' }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: 'white' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Quality Chart
+            const qualityCtx = document.getElementById('qualityChart');
+            if (qualityCtx) {
+                charts.quality = new Chart(qualityCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Premium Grade', 'Standard Grade', 'Basic Grade', 'Rejected'],
+                        datasets: [{
+                            data: [65, 25, 8, 2],
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                display: true,
+                                position: 'bottom',
+                                labels: { color: 'white' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
