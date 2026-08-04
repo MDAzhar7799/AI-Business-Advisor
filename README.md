@@ -1,4 +1,4 @@
-# AI Global Business Growth Advisor
+# AI Global Business Growth Advisor   
 
 An AI-powered business intelligence platform that helps entrepreneurs, startups, manufacturers, and exporters make smarter business decisions using Artificial Intelligence, Machine Learning, Geographic Risk Analysis, and Global Trade Intelligence.
 
