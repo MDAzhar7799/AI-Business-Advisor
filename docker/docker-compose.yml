@@ -1,0 +1,104 @@
+# ==============================================================================
+# AI Business Recommendation System — docker-compose.yml
+# Methodology: AI Recommendation Platform + 4 DevOps Tools
+# (1. Puppet, 2. Nagios, 3. Terraform, 4. Ansible)
+# Author: MD AZHAR | Version: 2.0
+# ==============================================================================
+
+version: '3.8'
+
+services:
+
+  # ----------------------------------------------------------------------------
+  # Service 1: AI Recommendation App & Runtime Host
+  # Hosts the AI Flask backend, ML prediction models, and embedded DevOps agents
+  # ----------------------------------------------------------------------------
+  ai-recommendation-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: ai-business-recommendation:v2.0
+    container_name: ai_business_app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"         # Flask AI Recommendation API
+      - "5666:5666"         # Nagios NRPE Monitoring Port
+    environment:
+      - FLASK_ENV=production
+      - PORT=5000
+      - PUPPET_AUTO_APPLY=true
+      - NAGIOS_NRPE_ENABLE=true
+    volumes:
+      - ../logs:/app/logs
+      - ../database.db:/app/database.db
+    healthcheck:
+      test: ["CMD", "/usr/lib/nagios/plugins/check_http", "-H", "localhost", "-p", "5000", "-u", "/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - devops_network
+    labels:
+      - "project=AI-Business-Guider"
+      - "methodology=Puppet-Nagios-Terraform-Ansible"
+      - "author=MD AZHAR"
+
+  # ----------------------------------------------------------------------------
+  # Service 2: Nagios Monitoring Server
+  # Monitors server health, application availability, CPU, memory, disk, alerts
+  # ----------------------------------------------------------------------------
+  nagios-monitor:
+    image: jasonari/nagios:latest
+    container_name: devops_nagios_monitor
+    restart: unless-stopped
+    ports:
+      - "8085:80"           # Nagios Web UI: http://localhost:8085
+    environment:
+      - NAGIOS_TIMEZONE=UTC
+      - NAGIOSADMIN_USER=nagiosadmin
+      - NAGIOSADMIN_PASS=nagiosadmin123
+    volumes:
+      - ./nagios/nrpe.cfg:/opt/nagios/etc/nrpe.cfg:ro
+    depends_on:
+      - ai-recommendation-app
+    networks:
+      - devops_network
+    labels:
+      - "role=Nagios-Monitoring-Server"
+      - "methodology=Nagios-Availability-Alerting"
+
+  # ----------------------------------------------------------------------------
+  # Service 3: DevOps Controller (Puppet, Ansible, Terraform Workspace)
+  # Orchestrates IaC (Terraform) and Configuration Automation (Puppet & Ansible)
+  # ----------------------------------------------------------------------------
+  devops-controller:
+    image: ai-business-recommendation:v2.0
+    container_name: devops_automation_controller
+    restart: "no"
+    command: >
+      bash -c "
+        echo '=== 2. Methodology DevOps Tool Verification ===' &&
+        echo '[Puppet] Checking version:' && puppet --version &&
+        echo '[Nagios Plugins] Checking installed plugins:' && ls /usr/lib/nagios/plugins/check_* | head -n 5 &&
+        echo '[Terraform] Checking version:' && terraform -version &&
+        echo '[Ansible] Checking version:' && ansible --version &&
+        echo '=== All 4 DevOps tools ready for deployment and monitoring ==='
+      "
+    volumes:
+      - ./puppet:/etc/puppet/manifests:ro
+      - ./ansible:/etc/ansible/playbooks:ro
+      - ./terraform:/opt/terraform:ro
+    networks:
+      - devops_network
+    labels:
+      - "role=DevOps-Automation-Controller"
+      - "methodology=Puppet-Terraform-Ansible"
+
+# ------------------------------------------------------------------------------
+# Networks & Storage Volumes
+# ------------------------------------------------------------------------------
+networks:
+  devops_network:
+    driver: bridge
+    name: ai_devops_network

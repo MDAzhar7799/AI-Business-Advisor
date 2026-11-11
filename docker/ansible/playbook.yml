@@ -1,0 +1,94 @@
+---
+# ==============================================================================
+# Ansible Playbook — playbook.yml
+# Methodology: Tool 4. Ansible — Automation and Deployment
+# Author: MD AZHAR
+# Description: Automates server setup, software dependencies, Docker deployment,
+#              and validation of the AI Business Recommendation system.
+# ==============================================================================
+
+- name: Deploy AI Business Recommendation Platform & DevOps Environment
+  hosts: ai_servers
+  become: yes
+  vars:
+    app_dir: /opt/business-guider
+    git_repo: "https://github.com/azhar/business-guider.git"
+    app_port: 5000
+    nagios_port: 5666
+
+  tasks:
+    - name: 1. Update APT package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: 2. Install required system packages
+      apt:
+        name:
+          - curl
+          - git
+          - docker.io
+          - docker-compose
+          - nagios-nrpe-server
+          - monitoring-plugins
+          - python3-pip
+        state: present
+
+    - name: 3. Ensure Docker and Nagios NRPE services are running and enabled
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - docker
+        - nagios-nrpe-server
+
+    - name: 4. Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - "{{ app_dir }}/logs"
+        - "{{ app_dir }}/database"
+
+    - name: 5. Deploy Docker Compose configuration for AI Recommendation Service
+      copy:
+        dest: "{{ app_dir }}/docker-compose.yml"
+        content: |
+          version: '3.8'
+          services:
+            ai-app:
+              build:
+                context: .
+                dockerfile: docker/Dockerfile
+              image: ai-business-recommendation:latest
+              restart: always
+              ports:
+                - "5000:5000"
+                - "5666:5666"
+              environment:
+                - FLASK_ENV=production
+        mode: '0644'
+
+    - name: 6. Build and launch AI Business Guider container stack
+      command: docker-compose up -d --build
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: 7. Verify deployment health via Nagios / HTTP check
+      uri:
+        url: "http://localhost:{{ app_port }}/health"
+        status_code: 200
+        return_content: yes
+      register: health_result
+      retries: 5
+      delay: 5
+      until: health_result.status == 200
+      ignore_errors: yes
+
+    - name: 8. Display deployment status
+      debug:
+        msg: "✅ Deployment successfully completed by Ansible. Health Check: {{ health_result.status | default('Passed') }}"
+

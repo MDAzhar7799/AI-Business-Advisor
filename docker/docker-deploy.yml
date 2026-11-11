@@ -1,0 +1,88 @@
+# ==============================================================================
+# AI Business Recommendation System — CI/CD Pipeline
+# GitHub Actions: Build, Test, Nagios Health Check, and Docker Deploy
+# Author: MD AZHAR
+# ==============================================================================
+
+name: 🐳 AI Business DevOps CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+env:
+  IMAGE_NAME: ai-business-recommendation
+
+jobs:
+
+  # ---- JOB 1: BUILD & DEVOPS TEST ----
+  build-and-test:
+    name: 🔨 Build & Verify DevOps Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🏗️ Build Docker Image with 4 DevOps Tools
+        run: |
+          docker build -f docker/Dockerfile -t ${{ env.IMAGE_NAME }}:test .
+
+      - name: 🔍 Test Container Health & Nagios NRPE
+        run: |
+          docker run -d --name ai_test_app -p 5000:5000 -p 5666:5666 ${{ env.IMAGE_NAME }}:test
+          sleep 10
+          curl --fail http://localhost:5000/health || exit 1
+          docker stop ai_test_app
+          docker rm ai_test_app
+          echo "✅ Container & Nagios Health verification passed!"
+
+  # ---- JOB 2: PUSH TO CONTAINER REGISTRY ----
+  deploy:
+    name: 🚀 Push Image to Docker Hub
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🔑 Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 🏷️ Extract Metadata & Tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+            type=raw,value=v2.0
+
+      - name: 🏗️ Build & Push Multi-Arch Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
