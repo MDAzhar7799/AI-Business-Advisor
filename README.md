@@ -1,10 +1,13 @@
-# AI Global Business Growth Advisor   
+# AI Global Business Growth Advisor
 
-An AI-powered business intelligence platform that helps entrepreneurs, startups, manufacturers, and exporters make smarter business decisions using Artificial Intelligence, Machine Learning, Geographic Risk Analysis, and Global Trade Intelligence.
+An AI-powered business intelligence platform that helps entrepreneurs, startups, manufacturers, and exporters make smarter business decisions using Artificial Intelligence, Machine Learning, Geographic Risk Analysis, and Global Trade Intelligence. The platform is containerized with Docker and managed end to end with four DevOps tools: **Puppet, Nagios, Terraform and Ansible**.
 
 The system analyzes environmental risks, predicts future business growth, recommends profitable industries, identifies international demand, and helps users connect with global dealers and importers.
 
+**Version:** 2.0 | **Author:** MD Azhar
+
 ---
+
 ## Smart Location Analysis
 
 * Flood risk prediction
@@ -42,13 +45,20 @@ The system analyzes environmental risks, predicts future business growth, recomm
 * Port and logistics recommendations
 * Supply chain intelligence
 
-
 ## Interactive Dashboard
 
 * Real-time charts and graphs
 * Business heatmaps
 * Global trade maps
 * Growth analytics dashboard
+
+## DevOps Automation
+
+* Infrastructure provisioning with Terraform
+* Configuration management with Puppet
+* Automated deployment with Ansible
+* Health and availability monitoring with Nagios (NRPE)
+* Containerized deployment with Docker and an automated GitHub Actions CI/CD pipeline
 
 ---
 
@@ -72,12 +82,34 @@ Dealer & Export Suggestions
 Dashboard Visualization
 ```
 
+## DevOps Workflow
+
+```text
+Code Push (GitHub)
+   ↓
+GitHub Actions: Build Docker image + health test
+   ↓
+Push image to Docker Hub
+   ↓
+Terraform   → provisions infrastructure (VMs, network)
+   ↓
+Puppet      → configures servers to the desired state
+   ↓
+Ansible     → deploys the application using playbooks
+   ↓
+Nagios      → monitors health, resources and alerts
+```
+
 ---
 
 # Project Structure
 
 ```bash
 AI-Business-Advisor/
+│
+├── .github/
+│   └── workflows/
+│       └── docker-deploy.yml          # CI/CD: build, test, push to Docker Hub
 │
 ├── frontend/                          # React.js dashboard frontend
 │   ├── public/
@@ -109,10 +141,18 @@ AI-Business-Advisor/
 │
 ├── database/                          # Database schemas and SQLite DB
 │
+├── docker/                            # Docker + DevOps tooling
+│   ├── Dockerfile                     # App image with Puppet, Nagios, Terraform, Ansible
+│   ├── docker-compose.yml             # Multi-container setup
+│   ├── docker-entrypoint.sh           # Startup script for the DevOps stack
+│   ├── nginx.conf                     # Reverse proxy configuration
+│   ├── puppet/                        # Puppet manifests (site.pp)
+│   ├── nagios/                        # nrpe.cfg + check_ai_service.sh
+│   ├── terraform/                     # Terraform IaC files (.tf)
+│   └── ansible/                       # Ansible playbooks (playbook.yml)
+│
+├── logs/                              # Application logs (mounted volume)
 ├── requirements.txt                   # Python dependencies
-├── Dockerfile                         # Backend Docker image
-├── docker-compose.yml                 # Multi-container setup
-├── nginx.conf                         # Reverse proxy configuration
 ├── .dockerignore                      # Docker exclusions
 ├── .env.example                       # Environment variables example
 └── README.md
@@ -134,7 +174,7 @@ AI-Business-Advisor/
 
 * Flask
 * Python
-* JWT Authentication
+* JWT Authentication (Flask-JWT-Extended)
 * REST APIs
 
 ## Machine Learning
@@ -160,15 +200,66 @@ AI-Business-Advisor/
 
 ## DevOps & Deployment
 
-* Docker
-* Docker Compose
-* GitHub Actions (Optional CI/CD)
+| Tool | Role |
+| ---- | ---- |
+| Terraform | Infrastructure as Code: provisions VMs and networks |
+| Puppet | Configuration management: keeps servers in the desired state |
+| Ansible | Automation: deploys the app using playbooks |
+| Nagios (NRPE) | Monitoring: server health, CPU, memory, disk, service alerts |
+| Docker | Containerization |
+| Docker Compose | Multi-container orchestration |
+| Nginx | Reverse proxy and static file serving |
+| GitHub Actions | CI/CD pipeline |
 
 ---
 
-# Docker 
+# The Four DevOps Tools
 
-Docker allows the complete system to run using containers without modifying project files.
+## 1. Puppet: Configuration Management
+
+* Automates server configuration and software installation
+* Maintains consistency across multiple servers
+* Keeps required services and configurations in the desired state
+* Manifests live in `docker/puppet/` and `docker/puppet/site.pp` is applied automatically at container startup
+
+## 2. Nagios: Monitoring
+
+* Monitors server health and application availability
+* Checks CPU, memory, disk usage and running services
+* Raises alerts when a monitored service becomes unavailable
+* NRPE agent runs inside the app container on port `5666`; the Nagios web UI runs on port `8085`
+* Custom check: `docker/nagios/check_ai_service.sh`
+
+## 3. Terraform: Infrastructure as Code
+
+* Automates provisioning of cloud resources such as virtual machines and networks
+* Deploys the application infrastructure consistently and repeatably
+* Files live in `docker/terraform/`
+
+```bash
+cd docker/terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+## 4. Ansible: Automation and Deployment
+
+* Automates application deployment and server setup
+* Uses playbooks to run multiple tasks in order
+* Reduces manual configuration effort
+* Playbook: `docker/ansible/playbook.yml`
+
+```bash
+ansible-playbook docker/ansible/playbook.yml --syntax-check
+ansible-playbook docker/ansible/playbook.yml
+```
+
+---
+
+# Docker
+
+Docker allows the complete system to run in containers without modifying project files.
 
 ### 1. Clone Project
 
@@ -180,14 +271,16 @@ cd AI-Business-Advisor
 ### 2. Start Containers
 
 ```bash
+cd docker
 docker-compose up --build
 ```
 
 ### 3. Open Application
 
 ```text
-Frontend → http://localhost:8080
-Backend  → http://localhost:5000
+AI Recommendation API → http://localhost:5000
+Health check          → http://localhost:5000/health
+Nagios Web UI         → http://localhost:8085
 ```
 
 ---
@@ -202,20 +295,38 @@ docker-compose down
 
 # Docker Services
 
-| Service  | Container            | Port | Description            |
-| -------- | -------------------- | ---- | ---------------------- |
-| backend  | ai_business_backend  | 5000 | Flask APIs + ML models |
-| frontend | ai_business_frontend | 8080 | Nginx serving frontend |
+| Service | Container | Port | Description |
+| ------- | --------- | ---- | ----------- |
+| ai-recommendation-app | ai_business_app | 5000, 5666 | Flask APIs + ML models + Puppet/Nagios NRPE/Terraform/Ansible tooling |
+| nagios-monitor | devops_nagios_monitor | 8085 | Nagios server and web UI |
+| devops-controller | devops_automation_controller | n/a | Verifies Puppet, Nagios plugins, Terraform and Ansible, then exits |
+
+All services share the `ai_devops_network` bridge network.
 
 ---
 
-#  Docker Files
+# Docker Files
 
-| File               | Purpose                                      |
-| ------------------ | -------------------------------------------- |
-| Dockerfile         | Builds backend container                     |
-| docker-compose.yml | Runs frontend + backend together             |                   |
-| .dockerignore      | Prevents unnecessary files from being copied |
+| File | Purpose |
+| ---- | ------- |
+| docker/Dockerfile | Builds the app image (Python 3.10) with Puppet, Nagios NRPE and plugins, Terraform 1.6.6 and Ansible |
+| docker/docker-compose.yml | Runs the app, Nagios server and DevOps controller together |
+| docker/docker-entrypoint.sh | Applies Puppet, starts NRPE, verifies Terraform, syntax-checks Ansible, then launches the app |
+| docker/nginx.conf | Serves the frontend, proxies `/api/` and `/health` to Flask |
+| .dockerignore | Prevents unnecessary files from being copied |
+
+---
+
+# CI/CD Pipeline (GitHub Actions)
+
+Defined in `.github/workflows/docker-deploy.yml`.
+
+| Job | Trigger | What it does |
+| --- | ------- | ------------ |
+| build-and-test | Push / pull request to `main` or `master` | Builds the Docker image, starts the container and checks `/health` |
+| deploy | Push to `main` or `master` (after tests pass) | Logs in to Docker Hub and pushes the image tagged `latest`, `v2.0` and the commit SHA |
+
+Add these repository secrets in GitHub: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
 
 ---
 
@@ -233,16 +344,22 @@ docker-compose up -d --build
 docker-compose logs -f
 ```
 
-## Backend Logs Only
+## App Logs Only
 
 ```bash
-docker-compose logs -f backend
+docker-compose logs -f ai-recommendation-app
 ```
 
-## Restart Backend
+## Restart the App
 
 ```bash
-docker-compose restart backend
+docker-compose restart ai-recommendation-app
+```
+
+## Verify the DevOps Tools
+
+```bash
+docker-compose run --rm devops-controller
 ```
 
 ## Rebuild Without Cache
@@ -271,15 +388,22 @@ cp .env.example .env
 ## Example `.env`
 
 ```env
-FLASK_ENV=development
+FLASK_ENV=production
 JWT_SECRET_KEY=your-secret-key
 DATABASE_URL=sqlite:///database.db
 PORT=5000
+
+PUPPET_AUTO_APPLY=true
+NAGIOS_NRPE_ENABLE=true
+NAGIOSADMIN_USER=nagiosadmin
+NAGIOSADMIN_PASS=change-this-password
 
 GOOGLE_MAPS_API_KEY=your_google_maps_key
 OPENWEATHER_API_KEY=your_weather_api_key
 UN_COMTRADE_API_KEY=your_trade_api_key
 ```
+
+---
 
 # Example Use Cases
 
@@ -314,6 +438,20 @@ The system helps with:
 
 ---
 
+# Security Features
+
+* JWT Authentication
+* Password hashing
+* Secure API routing
+* Environment variable protection
+* Role-based access control
+* Security headers in Nginx (X-Frame-Options, X-Content-Type-Options, X-XSS-Protection)
+* Secrets for Docker Hub stored in GitHub Actions secrets
+
+> **Note:** Change the default Nagios admin password before any real deployment and keep credentials in `.env`, not in `docker-compose.yml`.
+
+---
+
 # Future Enhancements
 
 * Satellite image analysis
@@ -326,22 +464,12 @@ The system helps with:
 
 ---
 
-# Security Features
-
-* JWT Authentication
-* Password hashing
-* Secure API routing
-* Environment variable protection
-* Role-based access control
-
----
-
 # Future Scalability
 
 The architecture supports:
 
 * Kubernetes deployment
-* Cloud deployment (AWS/Azure/GCP)
+* Cloud deployment (AWS/Azure/GCP) provisioned through Terraform
 * Microservices architecture
 * Distributed ML processing
 * Real-time streaming analytics
